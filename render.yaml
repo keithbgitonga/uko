@@ -2,7 +2,7 @@
 # Prereq: a Neon Postgres database; set DATABASE_URL when prompted.
 services:
   - type: web
-    name: uko-api
+    name: uko-pilot-api
     runtime: docker
     plan: free
     region: frankfurt
@@ -32,7 +32,7 @@ services:
       - key: DISPATCH_PHONES
         sync: false
       - key: CORS_ORIGINS
-        value: https://uko-dispatch.onrender.com
+        value: https://uko-pilot-dispatch.onrender.com
       - key: EXPOSE_DEV_OTP
         value: "false"
       - key: SMS_PROVIDER
@@ -53,7 +53,7 @@ services:
         value: "false"
 
   - type: web
-    name: uko-dispatch
+    name: uko-pilot-dispatch
     runtime: static
     staticPublishPath: ./app/apps/dispatch/web
     autoDeploy: true
