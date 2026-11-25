@@ -52,10 +52,11 @@ services:
       - key: DOCUMENTS_REQUIRED
         value: "false"
 
-  - type: static
+  - type: web
     name: uko-dispatch
+    runtime: static
     staticPublishPath: ./app/apps/dispatch/web
-    plan: free
+    autoDeploy: true
     routes:
       - type: rewrite
         source: /*
