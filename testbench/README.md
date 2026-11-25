@@ -351,6 +351,12 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Verified on the tablet: `test-login-01-rider.png`, `test-login-02-driver.png`; notes `test-logins-notes.txt`.
 - **Disable `ALLOW_TEST_LOGINS` before public launch.**
 
+### 2026-11-25 — fixed test credentials (generic OTP)
+- Normal login with fixed numbers: Rider `+254712345678`, Driver `+254700000001`, Dispatch `+254700000010`; OTP `123456`.
+- One-tap test-login cards/endpoints removed; apps prefill the numbers and show the test hint.
+- API verified (test channel returns the code; wrong code rejected; dispatch test login passes the ops guard); rider reached home (`test-creds-01-rider.png`).
+- Disable by removing/blanking `TEST_OTP` before launch (`docs/Test-Logins.md`).
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
