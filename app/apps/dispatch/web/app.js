@@ -1,5 +1,7 @@
 const params = new URLSearchParams(location.search);
-const API_BASE = params.get('api') || 'http://localhost:3100/v1';
+const LOCAL_API = 'http://localhost:3100/v1';
+const API_KEY = 'uko_dispatch_api';
+let apiBase = (params.get('api') || localStorage.getItem(API_KEY) || (['localhost', '127.0.0.1'].includes(location.hostname) ? LOCAL_API : '')).replace(/\/$/, '');
 const TOKEN_KEY = 'uko_dispatch_token';
 let token = params.get('token') || localStorage.getItem(TOKEN_KEY) || '';
 let currentView = params.get('view') || 'overview';
@@ -20,7 +22,8 @@ function fmtWhen(value) {
 }
 
 async function api(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  if (!apiBase) throw new Error('Set the API URL first');
+  const response = await fetch(`${apiBase}${path}`, {
     ...options,
     headers: {
       'content-type': 'application/json',
@@ -36,7 +39,8 @@ async function api(path, options = {}) {
 function showLogin() {
   $('app').classList.add('hidden');
   $('login').classList.remove('hidden');
-  $('api-base').textContent = API_BASE;
+  $('api-base').textContent = apiBase || 'not set';
+  if ($('api-input') && !$('api-input').value) $('api-input').value = apiBase;
 }
 
 function showApp() {
@@ -297,6 +301,11 @@ async function refresh() {
 
 $('send-code').onclick = async () => {
   $('login-error').textContent = '';
+  const typed = ($('api-input')?.value || '').trim().replace(/\/$/, '');
+  if (!typed) { $('login-error').textContent = 'Enter the API URL, e.g. https://your-api.onrender.com/v1'; return; }
+  apiBase = typed;
+  localStorage.setItem(API_KEY, apiBase);
+  $('api-base').textContent = apiBase;
   try {
     const body = await api('/auth/otp/request', { method: 'POST', body: JSON.stringify({ phone: $('phone').value.trim() }) });
     $('otp-block').classList.remove('hidden');
@@ -322,7 +331,7 @@ $('refresh').onclick = refresh;
 $('signout').onclick = () => { localStorage.removeItem(TOKEN_KEY); token = ''; clearInterval(refreshTimer); showLogin(); };
 document.querySelectorAll('[data-view]').forEach((el) => { el.onclick = () => setView(el.dataset.view); });
 
-if (token) {
+if (token && apiBase) {
   $('ops-phone').textContent = 'Signed in';
   showApp();
 } else {
