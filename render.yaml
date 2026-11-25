@@ -3,11 +3,12 @@
 services:
   - type: web
     name: uko-pilot-api
-    runtime: docker
+    runtime: node
     plan: free
     region: frankfurt
-    dockerContext: ./app
-    dockerfilePath: ./app/services/api/Dockerfile
+    rootDir: app/services/api
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: mkdir -p uploads/driver-documents && node scripts/migrate.mjs && node dist/main.js
     healthCheckPath: /v1/health
     autoDeploy: true
     envVars:
@@ -23,6 +24,8 @@ services:
         value: "true"
       - key: SKIP_POSTGIS
         value: "1"
+      - key: MIGRATIONS_DIR
+        value: ../../db/migrations
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ACCESS_TTL
