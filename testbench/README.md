@@ -345,11 +345,12 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Rider + driver APKs rebuilt with `API_BASE_URL=https://uko-pilot-api.onrender.com/v1` and installed; login screens show the Render API (dev OTP disabled, SMS login).
 - Notes: `render-live-notes.txt`; hosting guide `docs/Free-Hosting.md`.
 
-### 2026-11-25 — one-tap test logins
-- Guarded `ALLOW_TEST_LOGINS=true` test accounts for rider, driver, dispatch, safety and admin; normal SMS OTP remains.
-- Rider/driver login pages show a **Test logins** card; dispatch login has one-tap buttons.
-- Verified on the tablet: `test-login-01-rider.png`, `test-login-02-driver.png`; notes `test-logins-notes.txt`.
-- **Disable `ALLOW_TEST_LOGINS` before public launch.**
+### 2026-11-25 — fixed test credentials (generic OTP)
+- Normal login with fixed numbers: Rider `+254712345678`, Driver `+254700000001`, Dispatch `+254700000010`; OTP `123456`.
+- One-tap cards/endpoints removed; apps prefill the numbers and show the test hint.
+- Verified: API test channel returns `123456`, wrong code rejected, dispatch test login passes ops guard; rider and driver generic-OTP logins reached home (`test-creds-01-rider.png`, `test-creds-02-driver.png`).
+- Test numbers bypass OTP request rate limiting while `TEST_OTP` is set.
+- Disable by removing/blanking `TEST_OTP` before launch (`docs/Test-Logins.md`).
 
 ### 2026-11-25 — fixed test credentials (generic OTP)
 - Normal login with fixed numbers: Rider `+254712345678`, Driver `+254700000001`, Dispatch `+254700000010`; OTP `123456`.
