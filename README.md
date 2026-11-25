@@ -63,6 +63,7 @@ Working project folder for the **Uko?** platform: an original rider-tracking and
 **Step 56 — Saved places + live ETA (2026-11-25): persisted saved places with a save action, and a live driver ETA on the rider driver card; ETA verified 7 min → 1 min on an assigned ride.**
 **Step 57 — Saved place edit/delete, driver ETA, offline fallback (2026-11-25): rename/remove menus, driver remaining-ETA, and runtime map fallback with automatic recovery.**
 **Step 58 — Home map line fix (2026-11-25): removed the demo straight placeholder; polylines now appear only for real OSRM route geometry.**
+**Step 60 — Render + Neon deployment prep (2026-11-25): Neon SSL, boot-time migrations, Render Blueprint for API + static dispatch, app build script and deployment guide.**
 **Step 59 — Calculating route + public hosting + dispatch (2026-11-25): route spinner, free Cloudflare quick tunnels for API/dispatch, public API build for rider/driver, and dispatch access tooling.**
 
 - Plan deliverable: [`docs/Uko-Product-Plan-v0.1.pdf`](docs/Uko-Product-Plan-v0.1.pdf) (11 pages); source [`docs/uko-plan-v0.1.html`](docs/uko-plan-v0.1.html)
@@ -79,6 +80,7 @@ Working project folder for the **Uko?** platform: an original rider-tracking and
 - **Pilot kit: [`docs/Pilot-Kit-v0.1.md`](docs/Pilot-Kit-v0.1.md)** — roles, daily cadence, rider/driver onboarding scripts, SOS drill, KPI tracker and go/no-go checklist
 - **Production deployment: [`app/deploy/README.md`](app/deploy/README.md)** — Docker Compose stack (PostGIS, migrations, API, Caddy TLS), secrets template and operations notes
 - **Firebase setup + maps status: [`docs/Google-Setup.md`](docs/Google-Setup.md)** — one remaining Firebase service-account step; in-app maps use OpenStreetMap with no key
+- **Free hosting (Render + Neon): [`docs/Free-Hosting.md`](docs/Free-Hosting.md)** — permanent deploy blueprint, Neon SSL, migrations-on-boot and app rebuild script
 - **Current status brief (PDF): [`docs/Uko-Phase1-Status-Brief.pdf`](docs/Uko-Phase1-Status-Brief.pdf)** (7 pages) — plain-language where-we-are + recommended path
 - Evidence pack: [`recon/bolt-builds/bolt-builds.md`](recon/bolt-builds/bolt-builds.md)
 - Parity matrix v0 + v1/v1.1 scoring: [`recon/parity-matrix-v0.md`](recon/parity-matrix-v0.md)
