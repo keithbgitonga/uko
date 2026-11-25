@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Uko? Dispatch</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="login" class="login-screen">
+    <div class="login-card">
+      <div class="brand"><span class="brand-mark">?</span><span class="brand-name">Uko?</span><span class="brand-tag">Dispatch</span></div>
+      <h1>Operations console</h1>
+      <p class="muted">Sign in with the ops phone number. This pilot console uses the same OTP login as the rider app; role-based access is next.</p>
+      <label class="field-label">Phone</label>
+      <input id="phone" class="input" value="+254712345678" autocomplete="tel" />
+      <button id="send-code" class="btn btn-primary">Send code</button>
+      <div id="otp-block" class="hidden">
+        <label class="field-label">Code <span id="dev-code" class="dev-code"></span></label>
+        <input id="otp" class="input" inputmode="numeric" maxlength="6" placeholder="6-digit code" />
+        <button id="verify" class="btn btn-primary">Open console</button>
+      </div>
+      <p id="login-error" class="error"></p>
+      <p class="muted small">API: <span id="api-base"></span></p>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand small"><span class="brand-mark">?</span><span class="brand-name">Uko?</span><span class="brand-tag">Dispatch</span></div>
+      <nav>
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="rides">Rides</button>
+        <button class="nav-item" data-view="incidents">Incidents</button>
+        <button class="nav-item" data-view="scheduled">Scheduled</button>
+        <button class="nav-item" data-view="money">Money</button>
+        <button class="nav-item" data-view="documents">Documents</button>
+        <button class="nav-item" data-view="audit">Audit</button>
+        <button class="nav-item" data-view="system">System</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="ops-phone" class="muted small"></div>
+        <button id="signout" class="link-button">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="view-title">Overview</h2>
+          <div class="muted small" id="last-updated">Waiting for data…</div>
+        </div>
+        <div class="topbar-actions">
+          <span class="live-dot"></span><span class="muted small">Live</span>
+          <button id="refresh" class="btn btn-ghost">Refresh</button>
+        </div>
+      </header>
+
+      <section id="view-overview" class="view">
+        <div class="metrics" id="metrics"></div>
+        <div class="panels">
+          <div class="panel">
+            <div class="panel-head"><h3>Recent rides</h3><button class="link-button" data-view="rides">View all</button></div>
+            <div id="overview-rides"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Open incidents</h3><button class="link-button" data-view="incidents">View all</button></div>
+            <div id="overview-incidents"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-rides" class="view hidden">
+        <div class="panel"><div id="rides-table"></div></div>
+      </section>
+
+      <section id="view-incidents" class="view hidden">
+        <div class="panel"><div id="incidents-table"></div></div>
+      </section>
+
+      <section id="view-money" class="view hidden">
+        <div class="metrics" id="money-metrics"></div>
+        <div class="panels">
+          <div class="panel"><h3>By payment method</h3><div id="money-methods"></div></div>
+          <div class="panel"><h3>Commission</h3><div id="money-commission"></div></div>
+        </div>
+        <div class="panel"><h3>Mismatches</h3><div id="money-mismatches"></div></div>
+      </section>
+
+      <section id="view-documents" class="view hidden">
+        <div class="panel"><h3>Driver documents</h3><div id="documents-table"></div></div>
+      </section>
+
+      <section id="view-system" class="view hidden">
+        <div class="metrics" id="system-metrics"></div>
+        <div class="panels">
+          <div class="panel"><h3>Readiness</h3><div id="system-ready"></div></div>
+          <div class="panel"><h3>Events · last 24h</h3><div id="system-events"></div></div>
+        </div>
+        <div class="panel"><h3>Alerts</h3><div id="system-alerts"></div></div>
+      </section>
+
+      <section id="view-audit" class="view hidden">
+        <div class="panel"><h3>Ops audit log</h3><div id="audit-table"></div></div>
+      </section>
+
+      <section id="view-scheduled" class="view hidden">
+        <div class="panel"><h3>Scheduled rides</h3><div id="scheduled-table"></div></div>
+        <div class="panel"><h3>Weekly series</h3><div id="series-table"></div></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

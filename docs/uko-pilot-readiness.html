@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Uko? — Pilot Readiness Review (v0.1)</title>
+<style>
+  @page {
+    size: A4;
+    margin: 17mm 14mm 14mm 14mm;
+    @top-left { content: "Uko? · Pilot readiness review"; font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.6pt; color: #6B7E84; letter-spacing: .06em; text-transform: uppercase; vertical-align: bottom; padding-bottom: 2.2mm; }
+    @top-right { content: "v0.1 · 23 Nov 2026"; font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.6pt; color: #6B7E84; letter-spacing: .06em; text-transform: uppercase; vertical-align: bottom; padding-bottom: 2.2mm; }
+    @bottom-left { content: "Confidential — internal pilot assessment"; font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.4pt; color: #93A4A9; vertical-align: top; padding-top: 2mm; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.6pt; color: #6B7E84; vertical-align: top; padding-top: 2mm; }
+  }
+  @page cover { margin: 0; @top-left{content:none} @top-right{content:none} @bottom-left{content:none} @bottom-right{content:none} }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Liberation Sans","DejaVu Sans",sans-serif; color: #14262C; font-size: 9.2pt; line-height: 1.42; }
+  .cover { page: cover; height: 297mm; background: #08222B; color: white; padding: 26mm 20mm; position: relative; page-break-after: always; }
+  .cover .mark { width: 20mm; height: 20mm; border-radius: 5mm; background: #0C8C86; display: flex; align-items: center; justify-content: center; font-size: 34pt; font-weight: 800; color: white; }
+  .cover .brand { margin-top: 12mm; font-size: 30pt; font-weight: 800; letter-spacing: -0.01em; }
+  .cover .brand span { color: #5FD3C8; }
+  .cover h1 { font-size: 34pt; line-height: 1.05; margin: 6mm 0 4mm; font-weight: 800; }
+  .cover .sub { font-size: 12pt; color: #B7D4CF; max-width: 150mm; }
+  .cover .meta { position: absolute; left: 20mm; bottom: 24mm; font-size: 9pt; color: #9FC3BD; }
+  .cover .gate { display: inline-block; margin-top: 10mm; padding: 3mm 6mm; background: #F5B942; color: #2B1C00; border-radius: 3mm; font-weight: 800; font-size: 11pt; letter-spacing: .02em; }
+  h2 { font-size: 15pt; margin: 0 0 3mm; color: #08222B; border-left: 3px solid #0C8C86; padding-left: 3mm; }
+  h3 { font-size: 10.5pt; margin: 5mm 0 2mm; color: #0A3B3A; }
+  p { margin: 0 0 2.6mm; }
+  .muted { color: #5C7077; }
+  .small { font-size: 8pt; }
+  .section { page-break-before: always; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 4mm 0; }
+  .kpi { border: 1px solid #DCE7E6; border-radius: 3mm; padding: 3.4mm; background: #FBFDFC; }
+  .kpi .n { font-size: 16pt; font-weight: 800; color: #0C8C86; }
+  .kpi .l { font-size: 7.6pt; color: #5C7077; text-transform: uppercase; letter-spacing: .05em; }
+  table { width: 100%; border-collapse: collapse; margin: 2.5mm 0 4mm; font-size: 8pt; }
+  th { background: #08222B; color: white; text-align: left; padding: 2mm 2.2mm; font-size: 7pt; text-transform: uppercase; letter-spacing: .05em; }
+  td { border-bottom: 1px solid #E4EEEC; padding: 2mm 2.2mm; vertical-align: top; }
+  tr:nth-child(even) td { background: #F8FBFA; }
+  .pill { display: inline-block; padding: .8mm 2.4mm; border-radius: 4mm; font-size: 6.8pt; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+  .green { background: #E9F7F4; color: #0B6E69; }
+  .amber { background: #FFF3DB; color: #8A5300; }
+  .red { background: #FDECEA; color: #A5241D; }
+  .callout { border: 1px solid #DCE7E6; border-left: 3px solid #0C8C86; background: #F6FAF9; border-radius: 2mm; padding: 3.2mm 4mm; margin: 3mm 0; }
+  .warn { border-left-color: #F5B942; background: #FFFBF0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  ul, ol { margin: 0 0 2.5mm 4.5mm; padding: 0; }
+  li { margin-bottom: 1.2mm; }
+  .check { list-style: none; margin-left: 0; }
+  .check li { position: relative; padding-left: 5.5mm; }
+  .check li::before { content: "☐"; position: absolute; left: 0; color: #0C8C86; font-size: 10pt; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; margin-top: 8mm; }
+  .sign .line { border-top: 1px solid #8FA6A2; margin-top: 12mm; padding-top: 1.6mm; font-size: 7.8pt; color: #5C7077; }
+  .evidence { font-size: 7.4pt; color: #5C7077; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="mark">?</div>
+  <div class="brand">Uko<span>?</span></div>
+  <h1>Pilot readiness<br>review</h1>
+  <div class="sub">Internal-pilot assessment for the Boda launch in one Nairobi zone: what is built, what is verified on the test bench, and what must close before riders and drivers are onboarded.</div>
+  <div class="gate">CONDITIONAL GO — internal pilot only</div>
+  <div class="meta">v0.1 · 23 November 2026 · Prepared by the Uko? engineering team<br>Evidence base: Phase 1 reference study, Phase 2 specs, Sprint 1–2 implementation, Lenovo TB-J616X test bench</div>
+</div>
+
+<h2>Executive summary</h2>
+<p>The MVP is functionally complete for an <strong>internal pilot in one Nairobi zone</strong>: rider and driver Android apps, matching, scheduling, recurring rides, calendar suggestions, cash + simulated M-Pesa payment, safety/SOS, trip history, driver earnings/shift, dispatch console and a Postgres-backed API have all been exercised end-to-end on the test bench.</p>
+<p>It is <strong>not ready for public beta</strong>. The remaining gaps are integration and operations, not core product flows: real M-Pesa Daraja, maps/location, push notifications, SMS OTP delivery, dispatch role-based access, incident response staffing/runbook, observability and legal/security hardening.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="n">2</div><div class="l">Android apps verified</div></div>
+  <div class="kpi"><div class="n">14</div><div class="l">End-to-end flows exercised</div></div>
+  <div class="kpi"><div class="n">100%</div><div class="l">API persistence across restart</div></div>
+  <div class="kpi"><div class="n">11</div><div class="l">Normalized Postgres tables</div></div>
+  <div class="kpi"><div class="n">1</div><div class="l">Pilot zone: Nairobi · Boda</div></div>
+  <div class="kpi"><div class="n">6–8 wks</div><div class="l">Estimate to public-beta gate</div></div>
+</div>
+
+<div class="callout warn"><strong>Recommendation.</strong> Run a <strong>4-week internal pilot</strong> with 15–25 invited riders, 8–12 vetted Bodas and cash-first payments (M-Pesa enabled only after the Daraja sandbox passes), with the dispatch console staffed by an on-call ops lead. Treat the public-beta gate as conditional on the must-have checklist in section 4.</div>
+
+<h3>Scope of this review</h3>
+<p>Covered: rider app, driver app, dispatch console, API, local Postgres, test bench and the operational model for the pilot. Out of scope for this review: detailed pricing economics, marketing, regulatory licensing beyond data protection, and the V0.2 roadmap (cards, automated payouts, iOS, ride-check, price bidding).</p>
+
+<div class="section">
+<h2>1. What is built and verified</h2>
+<table>
+<thead><tr><th style="width:22%">Surface</th><th style="width:48%">Delivered</th><th>Verified on test bench</th></tr></thead>
+<tbody>
+<tr><td><strong>Rider app</strong></td><td>OTP login, map-led home, booking sheet with saved/recent places, upfront Boda quote, cash + M-Pesa flow, live trip state, shared pickup code, trips &amp; receipts, scheduling (45 min–90 days), weekly recurring series with pause/resume, calendar suggestions (opt-in, on-device), safety contacts + SOS, in-trip SOS.</td><td><span class="pill green">VERIFIED</span></td></tr>
+<tr><td><strong>Driver app</strong></td><td>OTP login, online/offline, map-led home, real rider offers with 45 s countdown, accept/decline, route map, 4-step trip timeline, pickup code, earnings (20% commission) and shift summary (online time, trips, net).</td><td><span class="pill green">VERIFIED</span></td></tr>
+<tr><td><strong>Matching</strong></td><td>A rider booking becomes a real driver offer; accepting assigns the same ride; driver actions update the rider’s view in real time.</td><td><span class="pill green">VERIFIED</span></td></tr>
+<tr><td><strong>Scheduling</strong></td><td>Single rides up to 90 days ahead; weekly series up to 8 weeks; occurrences generated 14 days ahead; pause/resume; EAT-correct times.</td><td><span class="pill green">VERIFIED</span></td></tr>
+<tr><td><strong>Calendar</strong></td><td>Optional read-only calendar access; next-7-day events with a location; on-device filtering and dedupe; tap to prefill a scheduled ride; no calendar data leaves the device.</td><td><span class="pill green">VERIFIED</span></td></tr>
+<tr><td><strong>Payments</strong></td><td>M-Pesa STK simulation, pending → paid receipt, cash confirmation, receipts in trip history. API shape matches Daraja STK/callback.</td><td><span class="pill amber">SIMULATED</span></td></tr>
+<tr><td><strong>Safety</strong></td><td>Emergency contacts; SOS incident with private-response acknowledgement; false-alarm cancel; in-trip SOS; dispatch resolve action.</td><td><span class="pill green">VERIFIED</span></td></tr>
+<tr><td><strong>Dispatch</strong></td><td>Ops dashboard: metrics, rides, incidents, scheduled; cancel ride, resolve incident; auto-refresh.</td><td><span class="pill amber">PROTOTYPE</span></td></tr>
+<tr><td><strong>API &amp; data</strong></td><td>NestJS modular monolith; Postgres 18; normalized tables for auth, quotes/rides, driver trips/availability/shifts, payments, safety, scheduling; state survives API restarts.</td><td><span class="pill green">VERIFIED</span></td></tr>
+</tbody>
+</table>
+
+<h3>Evidence index</h3>
+<p class="evidence">Map-led rider home · booking sheet · quote · rider assigned with shared code · trip map · payment receipt · trips &amp; receipts · scheduling + series · calendar sheet · SOS acknowledged · driver offer countdown · driver trip map · driver earnings · driver shift · dispatch overview/incidents · Postgres persistence after restart. All screenshots are in <code>testbench/evidence/</code>; the test device is a Lenovo TB-J616X (Android 12, arm64, 3.7 GB RAM).</p>
+</div>
+
+<div class="section">
+<h2>2. Readiness scorecard</h2>
+<table>
+<thead><tr><th style="width:20%">Area</th><th style="width:11%">Status</th><th style="width:39%">Evidence / what works</th><th>Remaining gap</th></tr></thead>
+<tbody>
+<tr><td>Booking &amp; pricing</td><td><span class="pill green">READY</span></td><td>Quote → confirm → matching → trip lifecycle verified; fare breakdown and Boda-only rules</td><td>Fare policy/config should move to DB with an ops UI</td></tr>
+<tr><td>Matching &amp; trip lifecycle</td><td><span class="pill green">READY</span></td><td>Real rider ride becomes driver offer; shared pickup code and synchronised states</td><td>Dispatch ranking/timeouts; driver cancellation policy</td></tr>
+<tr><td>Scheduling &amp; recurring</td><td><span class="pill green">READY</span></td><td>Dates/times, weekly series, pause/resume, correct EAT display, DB persistence</td><td>Occurrence → live ride activation job; payment at activation</td></tr>
+<tr><td>Calendar suggestions</td><td><span class="pill green">READY</span></td><td>Opt-in permission, on-device filtering, dedupe, prefill tested on device</td><td>Calendar write-back deferred to V0.2</td></tr>
+<tr><td>Payments</td><td><span class="pill amber">CONDITIONAL</span></td><td>STK flow simulator + cash path + receipts; API contract production-shaped</td><td><strong>Real Daraja sandbox/production</strong>, callback verification, reconciliation ledger</td></tr>
+<tr><td>Safety &amp; SOS</td><td><span class="pill amber">CONDITIONAL</span></td><td>Contacts, SOS, acknowledgement, dispatch resolve verified</td><td>Responder agreement, on-call rota, incident runbook, SLA, audit retention</td></tr>
+<tr><td>Auth</td><td><span class="pill amber">CONDITIONAL</span></td><td>OTP flow, JWT access, hashed rotating refresh tokens persisted in Postgres</td><td><strong>SMS provider</strong> (dev OTP only), rate limits, device/session management</td></tr>
+<tr><td>Persistence</td><td><span class="pill green">READY</span></td><td>Normalized Postgres tables; verified across API restarts; JSONB backfill kept</td><td>Backups/restore, migration runbook, connection pooling</td></tr>
+<tr><td>Dispatch</td><td><span class="pill amber">PROTOTYPE</span></td><td>Metrics, rides, incidents, scheduled; cancel/resolve; live in Chromium</td><td>Role-based ops auth, Next.js production shell, audit log</td></tr>
+<tr><td>Driver app</td><td><span class="pill amber">CONDITIONAL</span></td><td>Offers, trips, earnings, shift; UI polished</td><td>Document upload/approval, vehicle onboarding, background location permissions</td></tr>
+<tr><td>Maps &amp; location</td><td><span class="pill red">NOT READY</span></td><td>Stylised in-app map keeps flows testable without keys</td><td>Google Maps SDK key, live location, geocoding, route ETA</td></tr>
+<tr><td>Notifications</td><td><span class="pill red">NOT READY</span></td><td>In-app polling covers the test bench</td><td>FCM push (offers, trip events, SOS), deep links</td></tr>
+<tr><td>Observability</td><td><span class="pill red">NOT READY</span></td><td>Structured API logs; dispatch metrics</td><td>Crash reporting, analytics, server metrics/alerts, on-call paging</td></tr>
+<tr><td>Security / privacy</td><td><span class="pill amber">CONDITIONAL</span></td><td>JWT, hashed refresh, validation, CORS; on-device calendar handling</td><td>TLS, secret manager, PII logging rules, DPA/privacy policy, pen-test</td></tr>
+<tr><td>Pilot operations</td><td><span class="pill red">NOT READY</span></td><td>Dispatch prototype supports ops</td><td>Support rota, refund policy, driver training, incident drills</td></tr>
+</tbody>
+</table>
+<p class="small muted">Status: READY = verified and acceptable for internal pilot; CONDITIONAL = pilot-safe only with a named mitigation; PROTOTYPE = internal use only; NOT READY = must close before pilot onboarding.</p>
+</div>
+
+<div class="section">
+<h2>3. Blockers and risks</h2>
+<h3>Must close before internal pilot</h3>
+<table>
+<thead><tr><th style="width:26%">Blocker</th><th style="width:46%">Why it matters now</th><th>Mitigation / owner</th></tr></thead>
+<tbody>
+<tr><td><strong>SMS OTP provider</strong></td><td>Dev OTP is not acceptable for real riders/drivers; without SMS onboarding cannot start.</td><td>Africa’s Talking adapter behind the existing interface + rate limits. Platform lead.</td></tr>
+<tr><td><strong>M-Pesa Daraja</strong></td><td>Simulated STK cannot collect money or prove reconciliation.</td><td>Daraja sandbox STK + callback verification before enabling M-Pesa; cash-only fallback for week 1. Payments lead.</td></tr>
+<tr><td><strong>Maps &amp; location</strong></td><td>Pickup pins and live tracking are core to a ride-hailing pilot.</td><td>Google Maps SDK key + permission UX; zone-address fallback for first days. Mobile lead.</td></tr>
+<tr><td><strong>Push notifications</strong></td><td>Drivers cannot rely on an open app to receive offers.</td><td>FCM for offer/trip/SOS; fallback SMS for offer. Mobile lead.</td></tr>
+<tr><td><strong>Dispatch auth &amp; runbook</strong></td><td>Console currently accepts any valid user token; no audit trail.</td><td>Ops role, allow-list phones, audit log; incident/refund runbook. Ops lead.</td></tr>
+<tr><td><strong>Safety response</strong></td><td>SOS acknowledgement is simulated; no human responder agreement yet.</td><td>Named responder, on-call rota, SLA, drill before riders onboard. Ops lead.</td></tr>
+<tr><td><strong>Security baseline</strong></td><td>Pilot handles phone numbers, trip and location data.</td><td>TLS, secret manager, PII log scrubbing, retention policy, DPA/privacy policy. Tech lead.</td></tr>
+<tr><td><strong>Data durability</strong></td><td>Postgres is local/user-space today.</td><td>Managed Postgres with backups/restore test before pilot day. Platform lead.</td></tr>
+</tbody>
+</table>
+
+<h3>Risk register</h3>
+<table>
+<thead><tr><th style="width:24%">Risk</th><th style="width:10%">L/I</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Integration delays (Daraja/maps/SMS)</td><td>M/H</td><td>Start accounts/keys this week; cash-only + stylised-map fallback for pilot week 1.</td></tr>
+<tr><td>Safety incident during pilot</td><td>L/C</td><td>Responder agreement, SOS drill, incident log, rider check-in call, conservative zone.</td></tr>
+<tr><td>Driver supply too thin</td><td>M/H</td><td>Recruit 2× needed drivers, shift incentives, dispatch manual reassignment.</td></tr>
+<tr><td>Payment mismatch / reconciliation</td><td>M/M</td><td>Cash-first; Daraja receipts matched to rides via checkout ID; daily reconciliation sheet.</td></tr>
+<tr><td>Location spoofing / fare abuse</td><td>M/M</td><td>Server-side fare rules, anomaly checks, manual review of outliers.</td></tr>
+<tr><td>Data loss / outage</td><td>L/H</td><td>Managed Postgres + backups; health checks and restart runbook; status channel.</td></tr>
+<tr><td>App distribution / signing</td><td>M/M</td><td>Signed release builds, internal distribution channel, device install checklist.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2>4. Internal-pilot go/no-go checklist</h2>
+<div class="two">
+<div>
+<h3>Product &amp; engineering</h3>
+<ul class="check">
+<li>SMS OTP provider live with rate limits</li>
+<li>Daraja sandbox STK + callback verified (or cash-only decision signed off)</li>
+<li>Google Maps key + location permissions (or zone-address fallback)</li>
+<li>FCM push for offers/trip/SOS</li>
+<li>Dispatch ops role + audit log</li>
+<li>Signed release builds installed on pilot devices</li>
+<li>Crash reporting + core analytics events</li>
+<li>Server metrics, alerts and on-call contact</li>
+<li>Postgres backup + restore drill</li>
+<li>Versioned API + release notes</li>
+</ul>
+</div>
+<div>
+<h3>Operations &amp; compliance</h3>
+<ul class="check">
+<li>Responder agreement + on-call rota + SOS drill</li>
+<li>Incident/refund runbook and support channel</li>
+<li>Driver vetting: licence, insurance, vehicle, documents</li>
+<li>Rider pilot invite list + onboarding script</li>
+<li>Cash handling and reconciliation process</li>
+<li>Privacy policy, terms and DPA signed</li>
+<li>Data retention + PII handling policy</li>
+<li>Pilot KPIs and daily review cadence</li>
+<li>Zone map and approved pickup points</li>
+<li>Go/no-go meeting with sign-off below</li>
+</ul>
+</div>
+</div>
+
+<div class="callout"><strong>Pilot definition (proposed).</strong> One Nairobi zone · 15–25 riders · 8–12 Bodas · 4 weeks · Boda only · cash-first with M-Pesa after Daraja passes · no cancellation fee · ~20% commission · private responder model (no 999 dialling). <strong>KPIs:</strong> assignment &lt; 3 min, completion ≥ 90%, cancellation ≤ 10%, zero unresolved safety incidents, CSAT ≥ 4.5/5, daily reconciliation complete.</div>
+
+<h3>Proposed next two weeks</h3>
+<table>
+<thead><tr><th style="width:30%">Window</th><th>Focus</th></tr></thead>
+<tbody>
+<tr><td>Week 1 (24–28 Nov)</td><td>SMS provider, Maps key + permissions, FCM, dispatch auth/audit, managed Postgres + backups, signing builds, privacy/DPA drafts.</td></tr>
+<tr><td>Week 2 (1–5 Dec)</td><td>Daraja sandbox end-to-end, security review fixes, pilot dry run on 2 devices + dispatch, driver/rider training, incident drill, go/no-go.</td></tr>
+<tr><td>Pilot (from 8 Dec)</td><td>4-week controlled pilot with daily metrics review; weekly scope review; M-Pesa enabled only after reconciliation success.</td></tr>
+</tbody>
+</table>
+
+<h3>Sign-off</h3>
+<p class="small muted">By signing, owners confirm the checklist above is complete and accept the pilot scope and risk mitigations for the internal pilot only.</p>
+<div class="sign">
+  <div class="line">Product owner · name / date</div>
+  <div class="line">Engineering lead · name / date</div>
+  <div class="line">Operations lead · name / date</div>
+</div>
+</div>
+
+</body>
+</html>

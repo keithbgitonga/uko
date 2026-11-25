@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Uko? — Product &amp; Reverse-Engineering Plan (v0.1)</title>
+<meta name="author" content="Uko? project — engineering research">
+<meta name="description" content="Product blueprint, reverse-engineering plan and delivery roadmap for Uko?, a rider tracker and scheduled-rides platform. Reference baseline: Bolt Rider and Bolt Driver.">
+<meta name="keywords" content="Uko, Bolt, ride-hailing, scheduled rides, rider tracking, reverse engineering, product plan">
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 15mm 15mm 15mm;
+    @top-left {
+      content: "Uko? · Product & Reverse-Engineering Plan";
+      font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+      font-size: 6.8pt; color: #6B7E84; letter-spacing: 0.06em;
+      text-transform: uppercase; vertical-align: bottom; padding-bottom: 2.4mm;
+    }
+    @top-right {
+      content: "v0.1 · Draft for review";
+      font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+      font-size: 6.8pt; color: #6B7E84; letter-spacing: 0.06em;
+      text-transform: uppercase; vertical-align: bottom; padding-bottom: 2.4mm;
+    }
+    @bottom-left {
+      content: "Confidential — internal planning document";
+      font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+      font-size: 6.6pt; color: #93A4A9; vertical-align: top; padding-top: 2.2mm;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+      font-size: 6.8pt; color: #6B7E84; vertical-align: top; padding-top: 2.2mm;
+    }
+  }
+  @page cover {
+    margin: 0;
+    @top-left { content: none; } @top-right { content: none; }
+    @bottom-left { content: none; } @bottom-right { content: none; }
+  }
+
+  html { font-family: "Liberation Sans", "DejaVu Sans", sans-serif; font-size: 9.3pt; line-height: 1.42; color: #172A31; }
+  body { margin: 0; padding: 0; }
+  p { margin: 0 0 2.6mm 0; }
+  h1, h2, h3, h4 { color: #08222B; margin: 0; }
+  a { color: #0C7F7A; text-decoration: none; }
+  .small { font-size: 7.7pt; line-height: 1.38; }
+  .tiny { font-size: 6.9pt; line-height: 1.35; }
+  .muted { color: #5C7077; }
+  .teal { color: #0C8C86; }
+  .nowrap { white-space: nowrap; }
+
+  section.sheet { break-after: page; }
+  section.sheet.last { break-after: auto; }
+
+  /* ---------- cover ---------- */
+  section.cover {
+    page: cover;
+    width: 210mm; height: 297mm; position: relative; overflow: hidden;
+    background: #08222B;
+    background: linear-gradient(145deg, #071E26 0%, #0A3038 46%, #0B4A48 100%);
+    color: #FFFFFF;
+  }
+  .cover-inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 20mm 20mm 16mm 20mm; }
+  .cover-top { position: relative; }
+  .cover-brand { font-size: 7.6pt; letter-spacing: 0.22em; text-transform: uppercase; color: #6FE0D2; }
+  .cover-right { position: absolute; right: 0; top: 0; font-size: 7.6pt; letter-spacing: 0.16em; text-transform: uppercase; color: #9BB6B9; }
+  .qmark {
+    position: absolute; right: 12mm; top: 38mm;
+    font-size: 330pt; font-weight: bold; line-height: 1;
+    color: #2FB9AE; opacity: 0.14;
+  }
+  .cover-main { position: absolute; left: 20mm; top: 108mm; right: 20mm; }
+  .wordmark { font-size: 92pt; font-weight: bold; letter-spacing: -0.035em; line-height: 0.95; color: #FFFFFF; }
+  .wordmark .q { color: #4FD9CA; }
+  .cover-sub { margin-top: 6mm; font-size: 15pt; line-height: 1.25; color: #E8F4F2; max-width: 150mm; }
+  .cover-sub2 { margin-top: 3mm; font-size: 9.6pt; color: #9FC4C3; letter-spacing: 0.02em; }
+  .cover-route { position: absolute; right: -6mm; bottom: 62mm; width: 140mm; opacity: 0.85; }
+  .cover-tags { position: absolute; left: 20mm; bottom: 52mm; }
+  .cover-tag {
+    display: inline-block; border: 0.6pt solid #3E7E7B; color: #C7E9E4;
+    font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 1.7mm 3.2mm; margin-right: 2.2mm; border-radius: 1.2mm;
+  }
+  .cover-bottom { position: absolute; left: 20mm; right: 20mm; bottom: 15mm; border-top: 0.6pt solid #2C5B5C; padding-top: 4mm; }
+  .cover-meta-table { width: 100%; border-collapse: collapse; }
+  .cover-meta-table td { vertical-align: top; padding: 0 4mm 0 0; font-size: 8pt; line-height: 1.45; color: #A9C6C6; }
+  .cover-meta-table .lbl { display: block; font-size: 6.6pt; letter-spacing: 0.13em; text-transform: uppercase; color: #5E9C99; margin-bottom: 1mm; }
+
+  /* ---------- shared page elements ---------- */
+  .sec-head { border-bottom: 1.1pt solid #0C8C86; padding-bottom: 2.2mm; margin-bottom: 4mm; }
+  .sec-num {
+    display: inline-block; width: 8.2mm; height: 8.2mm; line-height: 8.2mm;
+    background: #0C8C86; color: #FFFFFF; border-radius: 1.6mm;
+    font-size: 9pt; font-weight: bold; text-align: center; margin-right: 3mm;
+    vertical-align: middle;
+  }
+  .sec-title { display: inline; font-size: 17pt; font-weight: bold; letter-spacing: -0.015em; vertical-align: middle; }
+  .kicker { font-size: 7.2pt; letter-spacing: 0.14em; text-transform: uppercase; color: #0C8C86; font-weight: bold; margin-bottom: 1.6mm; }
+  .lede { font-size: 10.4pt; line-height: 1.42; color: #2A4048; margin-bottom: 3mm; }
+  .h3 { font-size: 10.2pt; font-weight: bold; color: #0A3038; margin: 4.5mm 0 1.8mm 0; }
+  .h4 { font-size: 8.6pt; font-weight: bold; color: #0A3038; margin: 3.2mm 0 1.2mm 0; }
+
+  .callout { background: #E9F7F4; border-left: 3.6pt solid #0C8C86; padding: 2.8mm 3.4mm; margin: 2.6mm 0 3.4mm 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.navy { background: #EDF3F4; border-left-color: #08222B; }
+  .callout.amber { background: #FDF3E2; border-left-color: #E09A2E; }
+
+  .grid { width: 100%; border-collapse: separate; border-spacing: 2.6mm 0; margin-left: -2.6mm; }
+  .grid td { vertical-align: top; }
+
+  .stat { border: 0.6pt solid #D8E5E3; border-top: 2.4pt solid #0C8C86; padding: 2.8mm 3mm 2.6mm 3mm; background: #FFFFFF; border-radius: 1.2mm; }
+  .stat .num { font-size: 19pt; font-weight: bold; color: #08222B; line-height: 1.05; letter-spacing: -0.02em; }
+  .stat .unit { font-size: 8.4pt; font-weight: bold; color: #0C8C86; }
+  .stat .cap { font-size: 7.2pt; color: #5C7077; margin-top: 1.2mm; line-height: 1.32; }
+
+  table.tbl { width: 100%; border-collapse: collapse; margin: 1.6mm 0 2.6mm 0; }
+  table.tbl th {
+    background: #0B2530; color: #FFFFFF; font-size: 7.1pt; font-weight: bold;
+    letter-spacing: 0.055em; text-transform: uppercase; text-align: left;
+    padding: 1.9mm 2.1mm; border: 0.5pt solid #0B2530;
+  }
+  table.tbl td { font-size: 7.9pt; line-height: 1.36; padding: 1.65mm 2.1mm; border: 0.5pt solid #E1EBEA; vertical-align: top; background: #FFFFFF; }
+  table.tbl tr:nth-child(even) td { background: #F5FAF9; }
+  table.tbl td.lbl { font-weight: bold; color: #0A3038; }
+  table.tbl.compact td { padding: 1.4mm 2mm; font-size: 7.7pt; }
+  table.tbl.compact th { padding: 1.7mm 2mm; }
+  table.tbl.tight td { padding: 1.2mm 1.9mm; font-size: 7.35pt; line-height: 1.34; }
+  table.tbl.tight th { padding: 1.5mm 1.9mm; font-size: 6.8pt; }
+  table.tbl.fixed { table-layout: fixed; }
+  table.tbl.fixed td, table.tbl.fixed th { overflow-wrap: break-word; }
+
+  ul, ol { margin: 1.2mm 0 2.8mm 0; padding-left: 4.2mm; }
+  li { margin-bottom: 1.15mm; }
+  li::marker { color: #0C8C86; }
+  .tight li { margin-bottom: 0.7mm; }
+
+  .chip { display: inline-block; border: 0.5pt solid #CFE0DE; background: #F3F9F8; border-radius: 1.2mm; padding: 0.55mm 1.7mm; margin: 0 0.8mm 1mm 0; font-size: 6.9pt; color: #23424A; }
+  .chip.dark { background: #0B2530; border-color: #0B2530; color: #E9F7F4; }
+
+  .surface { border: 0.7pt solid #D8E5E3; border-radius: 1.4mm; padding: 2.6mm 3mm; background: #FFFFFF; height: 24mm; }
+  .surface .name { font-size: 10pt; font-weight: bold; color: #08222B; }
+  .surface .platform { font-size: 6.8pt; text-transform: uppercase; letter-spacing: 0.1em; color: #0C8C86; margin: 0.8mm 0 1.4mm 0; }
+  .surface .desc { font-size: 7.6pt; line-height: 1.36; color: #3C545C; }
+
+  .arch-layer { margin: 0 0 0.8mm 0; }
+  .arch-label { font-size: 6.6pt; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7E84; margin-bottom: 0.8mm; }
+  .arch-box { display: inline-block; border: 0.6pt solid #CFE0DE; background: #FFFFFF; border-radius: 1.2mm; padding: 1.5mm 2.1mm; font-size: 7.2pt; color: #17343C; margin: 0 1mm 1mm 0; vertical-align: top; }
+  .arch-box strong { color: #08222B; }
+  .arch-box.edge { background: #08222B; border-color: #08222B; color: #D9F2EE; }
+  .arch-box.edge strong { color: #FFFFFF; }
+  .arch-box.svc { width: 41.2mm; }
+  .arch-box.data { background: #F1F7F6; }
+  .arch-box.intg { background: #FDF6EA; border-color: #EBD5AE; }
+  .arch-arrow { text-align: center; color: #9AB6B4; font-size: 7pt; line-height: 1; margin: 0.1mm 0 0.8mm 0; }
+
+  .flow { width: 100%; border-collapse: separate; border-spacing: 1.3mm 0; margin-left: -1.3mm; }
+  .flow td { text-align: center; vertical-align: middle; }
+  .flow .state { border: 0.6pt solid #B9D9D5; background: #F1FAF8; border-radius: 1.4mm; padding: 1.7mm 0.8mm; font-size: 6.6pt; font-weight: bold; letter-spacing: 0.02em; color: #0A3B3A; }
+  .flow .state.hot { background: #0C8C86; border-color: #0C8C86; color: #FFFFFF; }
+  .flow .arrow { font-size: 8.4pt; color: #0C8C86; width: 4mm; padding: 0; }
+  .flow-note { font-size: 7.1pt; color: #5C7077; margin-top: 1.2mm; }
+
+  .gantt { width: 100%; border-collapse: collapse; margin-top: 1mm; }
+  .gantt td { padding: 1.5mm 0; vertical-align: middle; font-size: 7.5pt; border-bottom: 0.4pt solid #EDF2F1; }
+  .gantt .phase { width: 46mm; font-weight: bold; color: #0A3038; }
+  .gantt .weeks { width: 17mm; color: #5C7077; font-size: 7pt; }
+  .track { position: relative; height: 4mm; background: #EDF3F2; border-radius: 1mm; }
+  .bar { position: absolute; top: 0; height: 4mm; background: #0C8C86; border-radius: 1mm; }
+  .bar.amber { background: #E09A2E; }
+  .bar.navy { background: #234B5A; }
+  .axis { position: relative; height: 3.4mm; margin-top: 1mm; border-top: 0.5pt solid #D8E5E3; }
+  .axis span { position: absolute; top: 0.8mm; font-size: 6.4pt; color: #8A9DA2; }
+
+  .risk td:first-child { font-weight: bold; }
+  .num-badge { display: inline-block; width: 5.2mm; height: 5.2mm; line-height: 5.2mm; background: #E9F7F4; color: #0C8C86; border-radius: 1mm; font-size: 7pt; font-weight: bold; text-align: center; margin-right: 1.6mm; }
+
+  .twocol { width: 100%; border-collapse: separate; border-spacing: 3mm 0; margin-left: -3mm; }
+  .twocol td { width: 50%; vertical-align: top; }
+
+  .endnote { margin-top: 4mm; border-top: 0.6pt solid #D8E5E3; padding-top: 2.6mm; font-size: 7.2pt; color: #6B7E84; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<section class="cover">
+  <div class="cover-inner">
+    <div class="cover-top">
+      <span class="cover-brand">Product plan · Step 0</span>
+      <span class="cover-right">20 Nov 2026 · Nairobi</span>
+    </div>
+    <div class="qmark">?</div>
+
+    <div class="cover-main">
+      <div class="wordmark">Uko<span class="q">?</span></div>
+      <div class="cover-sub">A rider tracker and scheduled-rides platform for Kenya.</div>
+      <div class="cover-sub2">Product blueprint · reverse-engineering plan · delivery roadmap</div>
+    </div>
+
+    <svg class="cover-route" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20,250 C120,240 110,120 210,110 S330,170 400,110 S500,30 540,55"
+            fill="none" stroke="#4FD9CA" stroke-width="2.4" stroke-dasharray="8 10" opacity="0.55"/>
+      <circle cx="20" cy="250" r="7" fill="#F0A63A"/>
+      <circle cx="20" cy="250" r="13" fill="none" stroke="#F0A63A" stroke-width="1" opacity="0.5"/>
+      <circle cx="540" cy="55" r="7" fill="#4FD9CA"/>
+      <circle cx="540" cy="55" r="13" fill="none" stroke="#4FD9CA" stroke-width="1" opacity="0.5"/>
+      <text x="34" y="272" fill="#C7E9E4" font-size="11" font-family="Liberation Sans">pickup</text>
+      <text x="524" y="38" fill="#C7E9E4" font-size="11" text-anchor="end" font-family="Liberation Sans">drop-off</text>
+    </svg>
+
+    <div class="cover-tags">
+      <span class="cover-tag">Rider app</span>
+      <span class="cover-tag">Driver app</span>
+      <span class="cover-tag">Dispatch console</span>
+      <span class="cover-tag">Track link</span>
+    </div>
+
+    <div class="cover-bottom">
+      <table class="cover-meta-table">
+        <tr>
+          <td style="width:26%"><span class="lbl">Prepared for</span>Uko? project team</td>
+          <td style="width:30%"><span class="lbl">Reference baseline</span>Bolt Rider &amp; Bolt Driver (public Android builds)</td>
+          <td style="width:22%"><span class="lbl">Document</span>Plan v0.1 — draft for review</td>
+          <td style="width:22%"><span class="lbl">Next deliverable</span>Evidence-backed Bolt reference report</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 1. EXEC SUMMARY ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">01</span><span class="sec-title">Executive summary</span>
+  </div>
+
+  <p class="lede"><strong>Uko?</strong> — Swahili for “Where are you?” — is a rider-tracking and scheduled-rides platform. A rider books now or for later, a driver-partner sees exactly where they are needed and when, and an operator sees every ride, rider and shift on one live map.</p>
+
+  <p>Bolt's rider and driver apps are the reference baseline. They are the region's benchmark for on-demand booking and, importantly, they already treat scheduled rides as a first-class feature on both sides of the marketplace. We will study both Android builds — statically and evidence-first — to recover the observable product contract: screens, flows, state machines, integration points and scheduling rules. Those findings become weighted requirements for Uko?; they are not code to copy.</p>
+
+  <p>This document is <strong>Step 0</strong>: the plan, not the findings. It defines what Uko? should do, what we will inspect in Bolt, how the system is built, the order of delivery and the decisions needed from you before Step 1.</p>
+
+  <table class="grid" style="margin-top:4mm; margin-bottom:4mm;">
+    <tr>
+      <td style="width:25%"><div class="stat"><div class="num">3+1</div><div class="cap">Product surfaces: rider app, driver app, dispatch console, public track link</div></div></td>
+      <td style="width:25%"><div class="stat"><div class="num">2</div><div class="cap">Reference Android builds: Bolt Rider <span class="nowrap">ee.mtakso.client</span> and Bolt Driver <span class="nowrap">ee.mtakso.driver</span></div></div></td>
+      <td style="width:25%"><div class="stat"><div class="num">~25<span class="unit"> wks</span></div><div class="cap">Indicative plan from kickoff to single-zone pilot launch, with a seven-person delivery team</div></div></td>
+      <td style="width:25%"><div class="stat"><div class="num">1</div><div class="cap">Launch zone for the pilot, so scheduling and live tracking are proven before scaling</div></div></td>
+    </tr>
+  </table>
+
+  <table class="twocol">
+    <tr>
+      <td>
+        <div class="callout">
+          <div class="h4" style="margin-top:0;">What this document is</div>
+          <ul class="tight small" style="margin-bottom:0;">
+            <li>A scope and sequencing plan that can be signed off.</li>
+            <li>A statement of the Uko? product blueprint and MVP boundary.</li>
+            <li>A method for evidence-backed reference analysis of Bolt.</li>
+            <li>A delivery roadmap with gates, acceptance criteria and risks.</li>
+          </ul>
+        </div>
+      </td>
+      <td>
+        <div class="callout navy">
+          <div class="h4" style="margin-top:0;">What it is not</div>
+          <ul class="tight small" style="margin-bottom:0;">
+            <li>Not the reverse-engineering report — that is Phase 1.</li>
+            <li>Not final visual design, pricing or brand identity.</li>
+            <li>Not a legal opinion; a clean-room and IP review precedes Phase 1.</li>
+            <li>Not a promise of Bolt feature parity — parity is targeted and weighted.</li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="h3">Recommendation in three moves</div>
+  <table class="tbl compact">
+    <tr><th style="width:9mm;">#</th><th style="width:45mm;">Move</th><th>Why</th></tr>
+    <tr><td><strong>1</strong></td><td><strong>Study both Bolt sides</strong></td><td>Ride-hailing is two-sided. The rider's booking promise only works if the driver app can accept, prioritise and complete scheduled work. Analysing only one side would miss the core scheduling mechanics.</td></tr>
+    <tr><td><strong>2</strong></td><td><strong>Build Android-first, scheduling-first</strong></td><td>Android dominates the target market. Scheduling is the differentiator and the hardest backend problem, so it belongs in the MVP core — not in a later “nice to have” phase.</td></tr>
+    <tr><td><strong>3</strong></td><td><strong>Pilot in one zone</strong></td><td>Marketplace liquidity, on-time performance and live-ops playbooks are proven at small scale before we add cities, vehicle types or iOS.</td></tr>
+  </table>
+
+  <div class="h3">What's inside</div>
+  <table class="twocol small">
+    <tr>
+      <td>
+        <ul class="tight" style="list-style:none; padding-left:0; margin-bottom:0;">
+          <li><strong class="teal">01</strong> &nbsp;Executive summary</li>
+          <li><strong class="teal">02</strong> &nbsp;What Uko? is</li>
+          <li><strong class="teal">03</strong> &nbsp;Reference baseline: what Bolt does</li>
+          <li><strong class="teal">04</strong> &nbsp;Reverse-engineering plan: Bolt Rider + Bolt Driver</li>
+          <li><strong class="teal">05</strong> &nbsp;Uko? product blueprint</li>
+        </ul>
+      </td>
+      <td>
+        <ul class="tight" style="list-style:none; padding-left:0; margin-bottom:0;">
+          <li><strong class="teal">06</strong> &nbsp;The scheduling engine and ride lifecycle</li>
+          <li><strong class="teal">07</strong> &nbsp;System architecture and data model</li>
+          <li><strong class="teal">08</strong> &nbsp;Delivery roadmap</li>
+          <li><strong class="teal">09</strong> &nbsp;Quality gates and risks</li>
+          <li><strong class="teal">10</strong> &nbsp;Compliance, decisions and next steps</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</section>
+
+<!-- ============================ 2. PRODUCT CONCEPT ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">02</span><span class="sec-title">What Uko? is</span>
+  </div>
+
+  <div class="callout">
+    <p style="margin-bottom:1.2mm;"><strong>One-line definition.</strong> Uko? lets a passenger see and schedule a ride in seconds, lets a driver-partner see exactly where they are needed and when, and lets an operator see every ride, rider and shift on one live map — with a shareable tracking link for the people waiting at home.</p>
+  </div>
+
+  <div class="h3">Who it serves</div>
+  <table class="tbl compact">
+    <tr><th style="width:28mm;">User</th><th style="width:62mm;">Job to be done</th><th>What Uko? gives them</th></tr>
+    <tr><td class="lbl">Passenger</td><td>“I need a ride now, or at 7am tomorrow — and I want to know where it is.”</td><td>On-demand booking with upfront price; scheduled booking; live driver location and ETA; share-trip link; M-Pesa, card or cash; receipts and support.</td></tr>
+    <tr><td class="lbl">Driver-partner</td><td>“I want predictable work, clear rules and visible earnings.”</td><td>On-demand offers; scheduled job list; navigation and trip flow; availability planner; earnings and commission breakdown; ratings and incentives.</td></tr>
+    <tr><td class="lbl">Operator / dispatcher</td><td>“I need every ride and rider accounted for, and I need to fix exceptions fast.”</td><td>Live map; schedule board with assignment; driver roster and documents; cancellation and no-show handling; payouts and reconciliation.</td></tr>
+    <tr><td class="lbl">Family / trusted contact</td><td>“I just want to know they got there safely.”</td><td>No-install track link with live location and ETA; arrival notification; optional SMS fallback.</td></tr>
+  </table>
+
+  <div class="h3">Positioning: four claims we must earn</div>
+  <table class="grid">
+    <tr>
+      <td style="width:25%"><div class="surface" style="height:30mm;"><div class="platform">Certainty</div><div class="name" style="font-size:9pt;">Scheduled, not hoped-for</div><div class="desc">A booking is confirmed with a driver, a reminder and a fallback — not a request fired into the void at 7am.</div></div></td>
+      <td style="width:25%"><div class="surface" style="height:30mm;"><div class="platform">Visibility</div><div class="name" style="font-size:9pt;">Live at every step</div><div class="desc">Rider, driver and operator see the same state: searching, assigned, arriving, in ride, complete.</div></div></td>
+      <td style="width:25%"><div class="surface" style="height:30mm;"><div class="platform">Control</div><div class="name" style="font-size:9pt;">Ops in the loop</div><div class="desc">Dispatchers can assign, reassign, call, refund and spot a late ride before the rider complains.</div></div></td>
+      <td style="width:25%"><div class="surface" style="height:30mm;"><div class="platform">Local-first</div><div class="name" style="font-size:9pt;">Built for Kenya</div><div class="desc">M-Pesa and cash, low-bandwidth behaviour, English and Swahili, and Android devices that kill background apps.</div></div></td>
+    </tr>
+  </table>
+
+  <div class="h3">Scope assumptions to confirm</div>
+  <table class="twocol small" style="margin-bottom:1mm;">
+    <tr>
+      <td>
+        <ul class="tight" style="margin-bottom:0;">
+          <li><strong>A1 · Market:</strong> Kenya, pilot in one Nairobi zone; pricing, regulation and payments assume Kenya.</li>
+          <li><strong>A2 · “Rider” means both sides:</strong> the passenger who rides and the rider-partner (driver) who provides it. Passengers book ahead; operators schedule rider-partners.</li>
+          <li><strong>A3 · Platform:</strong> Android-first rider and driver apps; responsive web dispatch console; iOS after the pilot.</li>
+        </ul>
+      </td>
+      <td>
+        <ul class="tight" style="margin-bottom:0;">
+          <li><strong>A4 · Vehicle types at MVP:</strong> standard car and boda-boda. Premium, XL and shuttle are configuration, not new builds.</li>
+          <li><strong>A5 · Brand:</strong> “Uko?” is a working title; identity, logo and voice will be original and must not reuse Bolt assets.</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+  <div class="h3">MVP boundary</div>
+  <table class="tbl compact">
+    <tr><th style="width:50%;">In the MVP</th><th>Deliberately deferred</th></tr>
+    <tr>
+      <td>
+        On-demand booking with upfront fare · single scheduled bookings up to 90 days · live tracking and ETA · share-trip link · driver offer and trip flow · dispatch console with live map, schedule board and manual assign · M-Pesa STK and cash · ratings, receipts and support entry point · push and SMS notifications · basic SOS
+      </td>
+      <td>
+        Food, scooters and deliveries · iOS · recurring bookings (V1.1) · automated driver payouts (V1.1) · corporate billing · driver lending/rental · multi-country · in-app wallet · ride check automation (V1.1) · women-for-women category (V1.2)
+      </td>
+    </tr>
+  </table>
+</section>
+
+<!-- ============================ 3. REFERENCE BASELINE ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">03</span><span class="sec-title">Reference baseline: what Bolt does</span>
+  </div>
+
+  <div class="callout navy">
+    <table class="twocol" style="margin:0;">
+      <tr>
+        <td style="width:34%;">
+          <div class="tiny" style="letter-spacing:0.1em; text-transform:uppercase; color:#0C8C86; font-weight:bold; margin-bottom:1mm;">Rider build</div>
+          <div style="font-size:9.2pt; font-weight:bold; color:#08222B;">Bolt: Request a Ride</div>
+          <div class="small muted">ee.mtakso.client · CA.234.0<br>Google Play / APKPure listing, Nov 2026</div>
+        </td>
+        <td style="width:33%;">
+          <div class="tiny" style="letter-spacing:0.1em; text-transform:uppercase; color:#0C8C86; font-weight:bold; margin-bottom:1mm;">Driver build</div>
+          <div style="font-size:9.2pt; font-weight:bold; color:#08222B;">Bolt Driver: Drive &amp; Earn</div>
+          <div class="small muted">ee.mtakso.driver · DA.157.0<br>Google Play / APKPure listing, Nov 2026</div>
+        </td>
+        <td style="width:33%;">
+          <div class="tiny" style="letter-spacing:0.1em; text-transform:uppercase; color:#0C8C86; font-weight:bold; margin-bottom:1mm;">Public references</div>
+          <div class="small muted"><a href="https://bolt.eu/en-ke/rides/">bolt.eu/en-ke/rides</a> · <a href="https://bolt.eu/en-sa/driver/guide/schedule-rides/">driver schedule-rides guide</a> · <a href="https://play.google.com/store/apps/details?id=ee.mtakso.client">Play Store: rider</a> · <a href="https://play.google.com/store/apps/details?id=ee.mtakso.driver">Play Store: driver</a>. Versions are a planning snapshot; Phase 0 re-pins and hashes the exact builds.</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="h3" style="margin-top:1mm;">Capability map and Uko? decisions</div>
+  <table class="tbl tight fixed">
+    <tr>
+      <th style="width:19mm;">Area</th>
+      <th style="width:46mm;">Bolt rider app (publicly described)</th>
+      <th style="width:46mm;">Bolt driver app (publicly described)</th>
+      <th>Uko? MVP decision</th>
+    </tr>
+    <tr><td class="lbl">Booking</td><td>Upfront price, ride categories, pickup/drop-off, ETA before booking.</td><td>Automatic requests; accept or decline; in-app navigation.</td><td>Same core; Go, Comfort, XL and Boda categories.</td></tr>
+    <tr><td class="lbl">Scheduling</td><td>Book up to 90 days ahead; aimed at airports, meetings and occasions.</td><td>Scheduled requests list; accept in advance; fixed price and online-by time; overlaps avoided.</td><td>Single advance rides, 90-day window, pre-assignment, reminders, fallback reassignment.</td></tr>
+    <tr><td class="lbl">Tracking &amp; pickup</td><td>Live driver location and ETA; share-location link; pickup codes; masked phone number.</td><td>Navigate to pickup; “arriving” state; 5-minute rider grace from scheduled start; no-show after 10 minutes → cancel with fee.</td><td>Live tracking, share link, pickup code, masked call, configurable wait timers.</td></tr>
+    <tr><td class="lbl">Trip flow</td><td>Live trip tracking; Ride Check for unexpected long stops.</td><td>Start driving → Arriving → Start trip → Complete.</td><td>Same state machine, instrumented for on-time metrics.</td></tr>
+    <tr><td class="lbl">Safety</td><td>Emergency assist, 24/7 safety team, Ride Check, Women-for-women, private number.</td><td>Driver safety guidance and support.</td><td>SOS, share trip, trusted contacts, pickup code; ride check in V1.1.</td></tr>
+    <tr><td class="lbl">Payments</td><td>Card, cash, mobile payments and Bolt Balance depending on market; scheduled rides paid in-app.</td><td>Weekly payouts; commission deduction; cash-debt handling.</td><td>M-Pesa STK and cards; cash on-demand; prepaid scheduled; ledger and payout reports.</td></tr>
+    <tr><td class="lbl">Driver ops &amp; support</td><td>24/7 in-app support; receipts and trip history.</td><td>Earnings by distance/time/location; online/offline; scheduled jobs reserve time; support and cancellation consequences.</td><td>Earnings summary, availability planner, KYC/expiry tracking, two-way ratings, incident log.</td></tr>
+  </table>
+
+  <p class="tiny muted" style="margin-top:1mm; margin-bottom:0;">The scheduled-ride rule catalogue — assignment, online-by, wait timers, cancellation windows and prepayment — is on page 7. Features vary by country and app version.</p>
+
+  <div class="callout amber" style="margin-top:2.5mm;">
+    <div class="h4" style="margin-top:0;">Scheduled-ride rules visible in Bolt's driver guidance — to be verified in Phase 1</div>
+    <table class="twocol" style="margin:0;">
+      <tr>
+        <td>
+          <ul class="tight small" style="margin-bottom:0;">
+            <li>Drivers accept scheduled requests in advance; each shows a <strong>fixed price</strong> and an <strong>“online by” time</strong>.</li>
+            <li>While a scheduled ride is accepted, the driver is offered only <strong>non-overlapping, nearby</strong> requests.</li>
+            <li>The wait clock starts at the <strong>scheduled start time</strong>; the rider grace period is 5 minutes.</li>
+          </ul>
+        </td>
+        <td>
+          <ul class="tight small" style="margin-bottom:0;">
+            <li>Rider no-show: wait 10 minutes, then the driver cancels and the fee is applied automatically.</li>
+            <li>Rider cancels less than 1 hour before pickup → cancellation fee.</li>
+            <li><strong>Cash is not available</strong> for scheduled rides; payment is in-app only.</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================ 4. REVERSE-ENGINEERING PLAN ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">04</span><span class="sec-title">Reverse-engineering plan: Bolt Rider + Bolt Driver</span>
+  </div>
+
+  <div class="callout">
+    <p style="margin-bottom:1mm;"><strong>Objective.</strong> Recover the observable product contract of both apps — screens, flows, state machines, integration points, scheduling rules and edge-case handling — as evidence-backed requirements for Uko?. Every claim carries an evidence reference and a confidence label (<em>observed</em>, <em>derived</em> or <em>inferred</em>). We do not copy code, assets, protected text or visual design. <strong>Estimate: 8–10 working days for both builds.</strong></p>
+  </div>
+
+  <div class="h3">What we will inspect</div>
+  <table class="twocol small">
+    <tr>
+      <td>
+        <ul class="tight" style="margin-bottom:0;">
+          <li><strong>Package &amp; manifest —</strong> permissions, services, receivers, deep links, exported components, SDK inventory.</li>
+          <li><strong>Build, signing &amp; code map —</strong> split APKs/ABIs, SDK levels, certificate, obfuscation, integrity checks, package structure, feature flags.</li>
+          <li><strong>Identity &amp; auth —</strong> OTP, token lifecycle, device binding, logout/deletion, permissions.</li>
+          <li><strong>Network contract —</strong> hosts, REST/GraphQL/protobuf, realtime channel, retries/offline, certificate pinning.</li>
+          <li><strong>Ride domain —</strong> booking, matching, driver state machine, cancellation reasons, fare breakdown, receipts.</li>
+        </ul>
+      </td>
+      <td>
+        <ul class="tight" style="margin-bottom:0;">
+          <li><strong>Scheduling domain —</strong> entry points, date/time rules, advance assignment, reminders, cancellation windows, prepayment.</li>
+          <li><strong>Tracking &amp; location —</strong> cadence, background service behaviour, battery settings, map/navigation SDK, geofences.</li>
+          <li><strong>Safety &amp; notifications —</strong> SOS, share trip, ride check, masked calls, push channels, deep links.</li>
+          <li><strong>Driver economics —</strong> earnings, commission, incentives, cash debt, statements.</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+  <div class="h3">Method: seven steps, each with an output</div>
+  <table class="tbl tight">
+    <tr><th style="width:7mm;">#</th><th style="width:38mm;">Step</th><th>What we do</th><th style="width:38mm;">Output</th></tr>
+    <tr><td>1</td><td class="lbl">Acquire &amp; preserve</td><td>Obtain pinned builds, record SHA-256, version, certificate and permissions; keep immutable copies.</td><td>Build manifest</td></tr>
+    <tr><td>2</td><td class="lbl">Unpack &amp; inventory</td><td>apktool / jadx / bundletool; manifest, resources, DEX, native libraries and third-party SDKs.</td><td>Package and SDK map</td></tr>
+    <tr><td>3</td><td class="lbl">Map surfaces</td><td>Activities and fragments → screens; deep links and notification entry points → journeys.</td><td>Screen and flow inventory</td></tr>
+    <tr><td>4</td><td class="lbl">Trace domain logic</td><td>Ride and scheduled-ride state machines; cancellation, wait and fare rules; timers and fallbacks.</td><td>State diagrams + rule catalogue</td></tr>
+    <tr><td>5</td><td class="lbl">Map integrations</td><td>Endpoints, auth flows, realtime channel, maps/payments/analytics SDK behaviour.</td><td>Integration map (static)</td></tr>
+    <tr><td>6</td><td class="lbl">Test hypotheses</td><td>Only with test accounts and consent: runtime capture to confirm cadence, notifications and edge cases.</td><td>Runtime notes</td></tr>
+    <tr><td>7</td><td class="lbl">Translate to requirements</td><td>Weighted parity matrix, MVP cut, acceptance criteria and a clean-room spec for the build team.</td><td>Reference report</td></tr>
+  </table>
+
+  <table class="twocol">
+    <tr>
+      <td>
+        <div class="callout" style="margin-top:1mm;">
+          <div class="h4" style="margin-top:0;">Guardrails</div>
+          <ul class="tight small" style="margin-bottom:0;">
+            <li>Analyse only lawfully obtained, publicly available builds and documentation.</li>
+            <li>No authentication bypass, DRM circumvention, anti-tamper defeat or live user-data interception.</li>
+            <li>No Bolt code, assets, strings, logos or UI lifted into Uko?; implementation is clean-room from requirements.</li>
+            <li>Server-side logic is never recoverable from an APK. Gaps become documented unknowns and Uko? product decisions — never guesses presented as Bolt behaviour.</li>
+            <li>Legal and IP review before Phase 1 begins.</li>
+          </ul>
+        </div>
+      </td>
+      <td>
+        <div class="callout navy" style="margin-top:1mm;">
+          <div class="h4" style="margin-top:0;">Tools &amp; evidence standard</div>
+          <ul class="tight small" style="margin-bottom:0;">
+            <li>Craft Anything and REA for structured, evidence-ID-backed Android analysis; jadx and apktool for decompilation.</li>
+            <li>Emulator and proxy capture only for authorised runtime checks on test accounts.</li>
+            <li>Unknowns are logged explicitly — a bounded search is never reported as proof of absence.</li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <p class="small muted" style="margin-top:2mm; margin-bottom:0;">Exit gate: the parity matrix is reviewed and the MVP scope is frozen. Deliverables: feature/flow report, weighted parity matrix, state diagrams and an unknowns log.</p>
+</section>
+
+<!-- ============================ 5. PRODUCT BLUEPRINT ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">05</span><span class="sec-title">Uko? product blueprint</span>
+  </div>
+
+  <p class="lede">Four surfaces, one system of record. The rider and driver apps share a design language and a realtime backend; the dispatch console and public track link reuse the same APIs so every screen tells the same truth.</p>
+
+  <table class="grid">
+    <tr>
+      <td style="width:50%"><div class="surface"><div class="name">Uko? Rider</div><div class="platform">Android · Flutter · rider-facing</div><div class="desc">Book now or schedule, watch the ride live, pay with M-Pesa/card/cash, share the trip, rate and get help.</div></div></td>
+      <td style="width:50%"><div class="surface"><div class="name">Uko? Driver</div><div class="platform">Android · Flutter · driver-partner</div><div class="desc">Go online, receive on-demand and scheduled jobs, navigate, run the trip state machine, manage availability and earnings.</div></div></td>
+    </tr>
+    <tr>
+      <td style="width:50%"><div class="surface"><div class="name">Uko? Dispatch</div><div class="platform">Web · Next.js · operator console</div><div class="desc">Live map, schedule board, manual assign/reassign, driver roster and documents, pricing zones, payouts, support cases and analytics.</div></div></td>
+      <td style="width:50%"><div class="surface"><div class="name">Uko? Track</div><div class="platform">Public web / SMS link · no install</div><div class="desc">A signed link that shows live location, ETA and status to family or ops without exposing account data.</div></div></td>
+    </tr>
+  </table>
+
+  <div class="h3">Screen inventory (MVP)</div>
+  <table class="twocol">
+    <tr>
+      <td style="width:33%">
+        <div class="h4" style="margin-top:0;">Rider · 23 screens</div>
+        <div>
+          <span class="chip">Welcome</span><span class="chip">Phone + OTP</span><span class="chip">Profile setup</span><span class="chip">Home map</span><span class="chip">Destination search</span><span class="chip">Saved places</span><span class="chip">Ride options</span><span class="chip">Fare confirm</span><span class="chip">Schedule picker</span><span class="chip">Payment method</span><span class="chip">Finding driver</span><span class="chip">Driver assigned</span><span class="chip">Live trip</span><span class="chip">Trip complete</span><span class="chip">Rating</span><span class="chip">Receipt</span><span class="chip">My rides</span><span class="chip">Scheduled rides</span><span class="chip">Safety centre</span><span class="chip">SOS</span><span class="chip">Share trip</span><span class="chip">Support</span><span class="chip">Settings</span>
+        </div>
+      </td>
+      <td style="width:33%">
+        <div class="h4" style="margin-top:0;">Driver · 21 screens</div>
+        <div>
+          <span class="chip">Welcome</span><span class="chip">Phone + OTP</span><span class="chip">Documents upload</span><span class="chip">Approval status</span><span class="chip">Home offline</span><span class="chip">Home online</span><span class="chip">Incoming offer</span><span class="chip">Scheduled requests</span><span class="chip">Accepted schedule</span><span class="chip">Navigate to pickup</span><span class="chip">Arrived / wait</span><span class="chip">Start trip</span><span class="chip">In trip</span><span class="chip">Complete</span><span class="chip">Earnings today</span><span class="chip">Statements</span><span class="chip">Performance</span><span class="chip">Availability planner</span><span class="chip">Safety</span><span class="chip">Support</span><span class="chip">Settings</span>
+        </div>
+      </td>
+      <td style="width:33%">
+        <div class="h4" style="margin-top:0;">Dispatch · 11 screens</div>
+        <div>
+          <span class="chip">Sign in</span><span class="chip">Live map</span><span class="chip">Rides board</span><span class="chip">Schedule calendar</span><span class="chip">New booking</span><span class="chip">Assign / reassign</span><span class="chip">Driver roster</span><span class="chip">Documents</span><span class="chip">Pricing &amp; zones</span><span class="chip">Payouts</span><span class="chip">Support cases</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="h3">UX principles</div>
+  <table class="tbl compact">
+    <tr><th style="width:40mm;">Principle</th><th>What it means in practice</th></tr>
+    <tr><td class="lbl">Fast and forgiving</td><td>Three taps to book; scheduling is a toggle on fare-confirm, not a separate journey. Optimistic UI, queued actions and SMS fallback make weak 3G survivable.</td></tr>
+    <tr><td class="lbl">Trust by design</td><td>Fare, cancellation terms and payment method visible before confirm; receipts show the full breakdown; SOS and share-trip are always one tap away.</td></tr>
+    <tr><td class="lbl">Local and resilient</td><td>English and Swahili strings from day one, East Africa Time, M-Pesa wording users recognise, foreground service and OEM battery guidance for real Android phones.</td></tr>
+  </table>
+
+  <div class="callout" style="margin-top:1mm;">
+    <p style="margin-bottom:0;" class="small"><strong>Design intent.</strong> Calm, locally grounded and visibly its own product — deep green/navy, warm amber for action, generous type and a map that stays legible in sunlight. No Bolt colours, iconography or screen patterns.</p>
+  </div>
+</section>
+
+<!-- ============================ 6. SCHEDULING ENGINE ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">06</span><span class="sec-title">The scheduling engine and ride lifecycle</span>
+  </div>
+
+  <p class="lede">Scheduling is the feature that makes Uko? more than a Bolt clone. Bolt already treats advance rides as first-class on both sides; Uko? adds operator scheduling, conflict-aware assignment and explicit on-time accountability.</p>
+
+  <div class="h3">Scheduling rules for the MVP</div>
+  <table class="tbl compact">
+    <tr><th style="width:34mm;">Rule</th><th>Behaviour</th></tr>
+    <tr><td class="lbl">Advance window</td><td>Book from 30 minutes to 90 days ahead. Requests closer than the lead time are routed to on-demand matching instead.</td></tr>
+    <tr><td class="lbl">Lead time</td><td>Configurable per zone; default 45 minutes for automatic assignment, 30 minutes for operator-created bookings.</td></tr>
+    <tr><td class="lbl">Assignment</td><td>Pre-assign at T-24h where supply allows; otherwise broadcast at T-45m; re-broadcast at T-15m if unassigned; dispatcher override always available.</td></tr>
+    <tr><td class="lbl">Driver online-by</td><td>Driver reminder at T-60m; must be online and en route by T-20m; if not, the ride is reassigned and the driver's reliability score is affected.</td></tr>
+    <tr><td class="lbl">Conflict check</td><td>A driver cannot hold overlapping scheduled rides or shifts. A zone-configurable travel buffer (15–30 minutes) is enforced between jobs.</td></tr>
+    <tr><td class="lbl">Payment</td><td>Scheduled rides are prepaid: M-Pesa STK push at booking or card authorisation. Cash is disabled for scheduled rides.</td></tr>
+    <tr><td class="lbl">Cancellation</td><td>Rider cancels free up to 2 hours before pickup; a fee applies inside 2 hours. Driver cancellation is penalised above a threshold. No-show: wait 10 minutes, then cancel with fee.</td></tr>
+    <tr><td class="lbl">Reminders</td><td>Rider: T-24h and T-1h. Driver: job accepted, T-60m and T-20m. Both receive “driver assigned” and “driver en route”.</td></tr>
+    <tr><td class="lbl">Accountability</td><td>95% of scheduled rides assigned at least 1 hour before pickup; on-time pickup ≥ 90% during the pilot; every miss has a reason code.</td></tr>
+  </table>
+
+  <div class="h3">On-demand and scheduled ride state machine</div>
+  <table class="flow">
+    <tr>
+      <td><div class="state">REQUESTED</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">SEARCHING</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state hot">ASSIGNED</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">ARRIVING</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">ARRIVED</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state hot">IN PROGRESS</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">COMPLETED</div></td>
+    </tr>
+  </table>
+  <div class="flow-note">Exception states: <strong>CANCELLED_BY_RIDER</strong> · <strong>CANCELLED_BY_DRIVER</strong> · <strong>NO_SHOW</strong> · <strong>EXPIRED</strong> (no driver in time) · <strong>REASSIGNED</strong> · <strong>PAYMENT_FAILED</strong>. Every transition writes an immutable ride event with actor, timestamp, location and reason code — this is what powers support, disputes and on-time analytics.</div>
+
+  <div class="h3">Scheduled booking lifecycle</div>
+  <table class="flow">
+    <tr>
+      <td><div class="state">SCHEDULED</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">ASSIGNMENT PENDING</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state hot">DRIVER ASSIGNED</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">REMINDERS SENT</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state hot">ACTIVATED</div></td>
+      <td class="arrow">→</td>
+      <td><div class="state">COMPLETED</div></td>
+    </tr>
+  </table>
+  <div class="flow-note">Failure branches: <strong>UNASSIGNED_AT_T-15M</strong> → ops escalation; <strong>DRIVER_WENT_OFFLINE</strong> → reassign; <strong>RIDER_CANCELLED</strong> → fee policy; <strong>NO_DRIVER_AVAILABLE</strong> → auto-refund and apology credit. A scheduled booking is a durable record, separate from the live ride it activates into, so it can be audited before and after the trip.</div>
+
+  <div class="h3">Edge cases the engine must handle</div>
+  <table class="twocol">
+    <tr>
+      <td>
+        <ul class="tight small" style="margin-bottom:0;">
+          <li>Driver goes offline or loses signal after accepting a scheduled job.</li>
+          <li>Vehicle breakdown or document expiry discovered before pickup.</li>
+          <li>Rider is late; wait timer and no-show fee start at the scheduled time.</li>
+          <li>Two bookings for the same rider at the same time (duplicate guard).</li>
+        </ul>
+      </td>
+      <td>
+        <ul class="tight small" style="margin-bottom:0;">
+          <li>Payment authorisation fails at activation; grace period then cancel.</li>
+          <li>App killed by the OS mid-trip; server reconciles from last event.</li>
+          <li>Dispatch reassigns a ride while the driver is en route.</li>
+          <li>Zone or fare-rule change between booking and pickup (price is fixed at booking).</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</section>
+
+<!-- ============================ 7. ARCHITECTURE ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">07</span><span class="sec-title">System architecture and data model</span>
+  </div>
+
+  <p>A modular monolith keeps delivery speed high while preserving clean service boundaries. Realtime and scheduling are designed for failure from day one: every location ping is disposable, every ride event is durable.</p>
+
+  <div class="arch-layer">
+    <div class="arch-label">Client surfaces</div>
+    <span class="arch-box"><strong>Rider app</strong> · Flutter</span>
+    <span class="arch-box"><strong>Driver app</strong> · Flutter + background location</span>
+    <span class="arch-box"><strong>Dispatch console</strong> · web</span>
+    <span class="arch-box"><strong>Track page</strong> · public link</span>
+  </div>
+  <div class="arch-arrow">▼</div>
+
+  <div class="arch-layer">
+    <div class="arch-label">Edge and access</div>
+    <span class="arch-box edge"><strong>API gateway</strong> · REST + versioning · JWT/refresh · rate limits</span>
+    <span class="arch-box edge"><strong>Realtime hub</strong> · WebSocket fan-out</span>
+    <span class="arch-box edge"><strong>Feature flags</strong> · remote config</span>
+  </div>
+  <div class="arch-arrow">▼</div>
+
+  <div class="arch-layer">
+    <div class="arch-label">Domain services (modular monolith, split when load demands)</div>
+    <span class="arch-box svc"><strong>Identity &amp; KYC</strong><br>OTP, profiles, documents</span>
+    <span class="arch-box svc"><strong>Booking &amp; pricing</strong><br>quotes, fares, zones</span>
+    <span class="arch-box svc"><strong>Scheduling</strong><br>slots, assignment, reminders</span>
+    <span class="arch-box svc"><strong>Matching &amp; dispatch</strong><br>offers, scoring, reassign</span>
+    <span class="arch-box svc"><strong>Tracking</strong><br>location, ETA, trip events</span>
+    <span class="arch-box svc"><strong>Payments &amp; ledger</strong><br>STK, cash, commission</span>
+    <span class="arch-box svc"><strong>Notifications</strong><br>push, SMS, deep links</span>
+    <span class="arch-box svc"><strong>Safety &amp; support</strong><br>SOS, refunds, cases</span>
+  </div>
+  <div class="arch-arrow">▼</div>
+
+  <div class="arch-layer">
+    <div class="arch-label">State, streaming and integrations</div>
+    <span class="arch-box data"><strong>PostgreSQL + PostGIS</strong><br>system of record</span>
+    <span class="arch-box data"><strong>Redis</strong><br>geo index, locks, cache</span>
+    <span class="arch-box data"><strong>MQTT (EMQX)</strong><br>location ingest</span>
+    <span class="arch-box data"><strong>Object storage</strong><br>documents, receipts</span>
+    <span class="arch-box intg"><strong>M-Pesa Daraja</strong><br>STK push, C2B/B2C</span>
+    <span class="arch-box intg"><strong>Google Maps</strong><br>maps, directions, places</span>
+    <span class="arch-box intg"><strong>FCM / SMS</strong><br>push + Africa's Talking</span>
+  </div>
+
+  <div class="h3">Core entities</div>
+  <p class="small" style="margin-bottom:1.4mm;">
+    <span class="chip">User</span><span class="chip">RiderProfile</span><span class="chip">DriverProfile</span><span class="chip">Vehicle</span><span class="chip">Document</span><span class="chip">Availability</span><span class="chip">Shift</span><span class="chip">Booking</span><span class="chip">ScheduleSeries</span><span class="chip">Ride</span><span class="chip">RideEvent</span><span class="chip">Offer</span><span class="chip">Assignment</span><span class="chip">LocationPing</span><span class="chip">FareQuote</span><span class="chip">PricingRule</span><span class="chip">Zone</span><span class="chip">Payment</span><span class="chip">LedgerEntry</span><span class="chip">Payout</span><span class="chip">Rating</span><span class="chip">Incident</span><span class="chip">Notification</span><span class="chip">AuditLog</span>
+  </p>
+
+  <div class="h3">Recommended stack</div>
+  <table class="tbl tight">
+    <tr><th style="width:25mm;">Layer</th><th style="width:66mm;">Recommendation</th><th>Why / alternative</th></tr>
+    <tr><td class="lbl">Mobile</td><td>Flutter 3.x + Riverpod, two app flavours</td><td>One codebase for two Android apps; alternative React Native if the team is JS-native.</td></tr>
+    <tr><td class="lbl">Backend</td><td>NestJS modular monolith (TypeScript)</td><td>Clear domain modules and shared types; alternative Go if the tracking path needs lower latency.</td></tr>
+    <tr><td class="lbl">Data &amp; realtime</td><td>PostgreSQL 16 + PostGIS, Redis 7, MQTT (EMQX), WebSocket</td><td>Geospatial queries and transactions in one store; MQTT QoS for pings, WebSocket for UI.</td></tr>
+    <tr><td class="lbl">Scheduling &amp; console</td><td>BullMQ delayed jobs + outbox; Next.js 15</td><td>Reliable T-minus actions without extra infrastructure; alternative Temporal for complex workflows.</td></tr>
+    <tr><td class="lbl">Integrations</td><td>M-Pesa Daraja; Stripe/Pesapal; Google Maps; FCM/APNs; Africa's Talking SMS</td><td>Local rails first; card provider keeps PCI scope out; maps is the main per-request cost.</td></tr>
+    <tr><td class="lbl">Ops</td><td>Sentry, OpenTelemetry, Grafana; GitHub Actions + Docker</td><td>Observability and reproducible deploys from the first sprint.</td></tr>
+  </table>
+
+  <p class="tiny" style="margin:1.6mm 0 0 0;"><strong>Non-functional targets:</strong> location p95 ≤ 5s · API p95 ≤ 300ms · crash-free sessions ≥ 99.5% · 99.9% availability · RPO 15 min / RTO 1h · active-trip battery &lt; 8%/hour · APK &lt; 35MB · TLS everywhere with certificate pinning on auth and payment hosts.</p>
+</section>
+
+<!-- ============================ 8. DELIVERY ROADMAP ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">08</span><span class="sec-title">Delivery roadmap</span>
+  </div>
+
+  <p class="lede">Twenty-five weeks from kickoff to a single-zone pilot launch, assuming a seven-person team. The sequence front-loads reference analysis and scheduling so the hardest product risk is retired before the build gets expensive.</p>
+
+  <table class="tbl compact">
+    <tr><th style="width:33mm;">Phase</th><th style="width:20mm;">Weeks</th><th>Focus</th><th style="width:44mm;">Exit criteria</th></tr>
+    <tr><td class="lbl">0 · Plan &amp; decisions</td><td>W1</td><td>This plan, decision log, legal/IP check, build manifest, team setup.</td><td>Scope and guardrails signed off.</td></tr>
+    <tr><td class="lbl">1 · Reference analysis</td><td>W2–W3</td><td>Static analysis of both Bolt builds; screen/flow inventory; rule catalogue; weighted parity matrix.</td><td>Parity report accepted; unknowns logged.</td></tr>
+    <tr><td class="lbl">2 · Requirements &amp; design</td><td>W3–W5</td><td>PRD, wireframes and clickable prototype, data model, API contract, infra plan.</td><td>Prototype and architecture signed off.</td></tr>
+    <tr><td class="lbl">3 · Core MVP build</td><td>W6–W13</td><td>Rider app, driver app, backend, dispatch console, live tracking, cash/M-Pesa sandbox.</td><td>Alpha demo in a test zone.</td></tr>
+    <tr><td class="lbl">4 · Scheduling &amp; live ops</td><td>W14–W17</td><td>Scheduling engine, schedule board, auto-assign, reminders, cancellation fees, SOPs.</td><td>50 test scheduled rides completed end-to-end.</td></tr>
+    <tr><td class="lbl">5 · Payments, safety, hardening</td><td>W18–W21</td><td>Production M-Pesa, receipts, ratings, SOS/share, security review, load test, store assets.</td><td>UAT and security sign-off.</td></tr>
+    <tr><td class="lbl">6 · Pilot &amp; launch prep</td><td>W22–W25</td><td>Single-zone pilot with 15–25 drivers, metrics, fixes, store submission, launch checklist.</td><td>Pilot report; go/no-go decision.</td></tr>
+  </table>
+
+  <div class="h3">Indicative schedule</div>
+  <table class="gantt">
+    <tr><td class="phase">Plan &amp; decisions</td><td class="weeks">W1</td><td><div class="track"><div class="bar navy" style="left:0%; width:4%;"></div></div></td></tr>
+    <tr><td class="phase">Reference analysis</td><td class="weeks">W2–W3</td><td><div class="track"><div class="bar amber" style="left:4%; width:8%;"></div></div></td></tr>
+    <tr><td class="phase">Requirements &amp; design</td><td class="weeks">W3–W5</td><td><div class="track"><div class="bar navy" style="left:8%; width:12%;"></div></div></td></tr>
+    <tr><td class="phase">Core MVP build</td><td class="weeks">W6–W13</td><td><div class="track"><div class="bar" style="left:20%; width:32%;"></div></div></td></tr>
+    <tr><td class="phase">Scheduling &amp; live ops</td><td class="weeks">W14–W17</td><td><div class="track"><div class="bar" style="left:52%; width:16%;"></div></div></td></tr>
+    <tr><td class="phase">Payments, safety, hardening</td><td class="weeks">W18–W21</td><td><div class="track"><div class="bar" style="left:68%; width:16%;"></div></div></td></tr>
+    <tr><td class="phase">Pilot &amp; launch prep</td><td class="weeks">W22–W25</td><td><div class="track"><div class="bar amber" style="left:84%; width:16%;"></div></div></td></tr>
+  </table>
+  <div class="axis">
+    <span style="left:0%;">W1</span>
+    <span style="left:16%;">W5</span>
+    <span style="left:32%;">W9</span>
+    <span style="left:48%;">W13</span>
+    <span style="left:64%;">W17</span>
+    <span style="left:80%;">W21</span>
+    <span style="right:0%;">W25</span>
+  </div>
+
+  <div class="h3">Team assumption and effort</div>
+  <table class="tbl compact">
+    <tr><th style="width:40mm;">Role</th><th style="width:18mm;">People</th><th>Responsibility</th></tr>
+    <tr><td class="lbl">Product / delivery lead</td><td>0.5 (shared)</td><td>Scope, decisions, stakeholder communication, acceptance.</td></tr>
+    <tr><td class="lbl">Product designer</td><td>1</td><td>Flows, prototype, design system, usability tests with drivers.</td></tr>
+    <tr><td class="lbl">Flutter engineers</td><td>2</td><td>Rider and driver apps, background location, maps, notifications.</td></tr>
+    <tr><td class="lbl">Backend engineers</td><td>2</td><td>Domain services, scheduling, realtime, payments, ops console APIs.</td></tr>
+    <tr><td class="lbl">QA engineer</td><td>1</td><td>Device matrix, trip-state tests, UAT, release regression.</td></tr>
+    <tr><td class="lbl">DevOps (part-time)</td><td>0.5</td><td>Environments, CI/CD, observability, security baseline.</td></tr>
+  </table>
+
+</section>
+
+<!-- ============================ 9. QUALITY / RISKS ============================ -->
+<section class="sheet">
+  <div class="sec-head">
+    <span class="sec-num">09</span><span class="sec-title">Quality gates and risks</span>
+  </div>
+
+  <div class="h3" style="margin-top:0;">Parity scorecard (target vs Bolt baseline)</div>
+  <table class="tbl compact">
+    <tr><th style="width:52mm;">Area</th><th style="width:14mm;">Weight</th><th style="width:26mm;">Target</th><th>Evidence and acceptance</th></tr>
+    <tr><td class="lbl">Booking &amp; fare</td><td>15%</td><td>90%</td><td>Rider can book in ≤ 3 taps; upfront price matches quote at completion (except approved change).</td></tr>
+    <tr><td class="lbl">Scheduled booking</td><td>20%</td><td>90%</td><td>Book, assign, remind, activate, cancel and no-show paths all pass; 50-ride scheduling UAT.</td></tr>
+    <tr><td class="lbl">Live tracking &amp; ETA</td><td>15%</td><td>85%</td><td>Rider, driver, dispatch and track link agree within one state; ETA error ≤ 2 min p80.</td></tr>
+    <tr><td class="lbl">Driver trip flow</td><td>15%</td><td>90%</td><td>Offer → accept → navigate → arrive → start → complete passes on 10 device models.</td></tr>
+    <tr><td class="lbl">Payments &amp; receipts</td><td>10%</td><td>80%</td><td>M-Pesa happy path and failure retry; receipt reconciles to ledger; cash recorded.</td></tr>
+    <tr><td class="lbl">Safety &amp; support</td><td>10%</td><td>75%</td><td>SOS and share trip reachable in ≤ 2 taps; incident creates a support case.</td></tr>
+    <tr><td class="lbl">Dispatch &amp; operations</td><td>10%</td><td>80%</td><td>Dispatcher can see, assign, reassign, call and refund from one screen.</td></tr>
+    <tr><td class="lbl">Reliability &amp; performance</td><td>5%</td><td>NFR</td><td>Targets on page 8 met during a 2-hour load test and pilot week.</td></tr>
+  </table>
+  <p class="small muted" style="margin-top:-0.6mm;">Weighted score ≥ 85% is the parity gate for launch; items below target need an explicit, signed waiver. Scores are filled in after Phase 1 maps each row to evidence.</p>
+
+  <div class="h3">UAT scenarios that must pass</div>
+  <p class="small" style="margin-bottom:1.4mm;">
+    <span class="chip">Book now</span><span class="chip">Schedule 3 days ahead</span><span class="chip">Schedule tomorrow 07:00</span><span class="chip">Driver cancels scheduled ride</span><span class="chip">Rider no-show</span><span class="chip">Payment fails then retries</span><span class="chip">SOS + share link</span><span class="chip">Driver loses signal mid-trip</span><span class="chip">App killed during trip</span><span class="chip">Dispatcher reassigns</span><span class="chip">Zone change at pickup</span><span class="chip">Receipt reconciliation</span>
+  </p>
+
+  <div class="h3">Risks and mitigations</div>
+  <table class="tbl compact risk">
+    <tr><th style="width:62mm;">Risk</th><th style="width:14mm;">L / I</th><th>Mitigation</th></tr>
+    <tr><td>Legal / IP challenge from reference analysis</td><td>M / H</td><td>Clean-room process, legal review before Phase 1, public builds only, no asset or code reuse.</td></tr>
+    <tr><td>Android battery managers kill background location</td><td>H / M</td><td>Foreground service, OEM-specific guidance, device test matrix, server-side trip reconciliation.</td></tr>
+    <tr><td>Tracking unreliable on 3G / weak coverage</td><td>M / H</td><td>MQTT QoS, batched pings, reconnect backoff, last-known ETA fallback, SMS link fallback.</td></tr>
+    <tr><td>M-Pesa integration or onboarding delay</td><td>M / H</td><td>Start Daraja onboarding in week 1; aggregator fallback; cash-only pilot mode if required.</td></tr>
+    <tr><td>Supply cold-start in the pilot zone</td><td>H / M</td><td>Recruit 15–25 drivers before launch; scheduled corporate and school-run contracts; launch incentives.</td></tr>
+    <tr><td>Safety incident during pilot</td><td>L / H</td><td>In-trip recording, SOS, insurance, incident SOP and 24/7 on-call rotation.</td></tr>
+    <tr><td>App-store rejection over background location</td><td>M / M</td><td>Declarations and privacy policy ready early; a reduced “while using” mode as fallback.</td></tr>
+    <tr><td>Scope creep (food, iOS, recurring, wallet)</td><td>H / M</td><td>Frozen MVP list, change board, phase gates; extras go to the V1.1+ backlog.</td></tr>
+  </table>
+
+  <p class="small muted" style="margin-top:1mm;">Compliance checklist, decisions needed and the next five steps continue overleaf.</p>
+</section>
+
+<!-- ============================ 10. COMPLIANCE / DECISIONS / NEXT ============================ -->
+<section class="sheet last">
+  <div class="sec-head">
+    <span class="sec-num">10</span><span class="sec-title">Compliance, decisions and next steps</span>
+  </div>
+
+  <div class="h3" style="margin-top:0;">Compliance checklist</div>
+  <table class="twocol">
+    <tr>
+      <td>
+        <ul class="tight small" style="margin-bottom:0;">
+          <li><strong>IP / clean-room:</strong> requirements-only handoff, no Bolt assets or code, original brand.</li>
+          <li><strong>Data protection:</strong> Kenya Data Protection Act 2019 — ODPC registration, DPIA, consent, retention and deletion, breach process.</li>
+          <li><strong>Payments:</strong> PCI DSS stays with the provider; no card data stored or logged.</li>
+        </ul>
+      </td>
+      <td>
+        <ul class="tight small" style="margin-bottom:0;">
+          <li><strong>Transport &amp; drivers:</strong> licence, vehicle and insurance checks at onboarding, expiry automation.</li>
+          <li><strong>Consumer:</strong> visible fares and cancellation terms, complaint handling, accessibility.</li>
+          <li><strong>App stores:</strong> background location, safety and data-safety declarations.</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+  <div class="h3">Decisions needed before Step 1</div>
+  <table class="tbl compact">
+    <tr><th style="width:9mm;">#</th><th style="width:44mm;">Decision</th><th>Working default if you do not choose</th></tr>
+    <tr><td>D1</td><td class="lbl">“Rider” definition</td><td>Both passenger and rider-partner; both advance booking and operator scheduling.</td></tr>
+    <tr><td>D2</td><td class="lbl">Launch market and zone</td><td>Kenya, one Nairobi zone; car and boda-boda.</td></tr>
+    <tr><td>D3</td><td class="lbl">Who schedules</td><td>Passengers book ahead; dispatchers schedule rider-partners and shifts.</td></tr>
+    <tr><td>D4</td><td class="lbl">Payments at MVP</td><td>M-Pesa STK + cash for on-demand; M-Pesa/card prepayment for scheduled.</td></tr>
+    <tr><td>D5</td><td class="lbl">Platform order</td><td>Android-first; iOS after pilot.</td></tr>
+    <tr><td>D6</td><td class="lbl">Authorisation to analyse Bolt builds</td><td>Public builds, static analysis, clean-room; legal review before Phase 1.</td></tr>
+    <tr><td>D7</td><td class="lbl">Team, budget, launch date</td><td>Seven-person team, 25-week plan shown on page 9.</td></tr>
+    <tr><td>D8</td><td class="lbl">Brand</td><td>“Uko?” working title; original identity.</td></tr>
+  </table>
+
+  <div class="h3">Next five steps</div>
+  <table class="tbl compact">
+    <tr><td style="width:9mm;"><span class="num-badge">1</span></td><td><strong>Confirm D1–D8</strong> (or accept the working defaults) and nominate a product owner.</td></tr>
+    <tr><td><span class="num-badge">2</span></td><td><strong>Legal/IP check and build acquisition:</strong> pin Bolt Rider and Bolt Driver, hash them, and store immutable copies in <span class="nowrap">uko/recon/</span>.</td></tr>
+    <tr><td><span class="num-badge">3</span></td><td><strong>Run Phase 1:</strong> evidence-backed feature and flow analysis of both builds; deliver the Bolt reference report and parity matrix.</td></tr>
+    <tr><td><span class="num-badge">4</span></td><td><strong>Freeze MVP</strong> from the parity matrix; produce the prototype, PRD and technical design for sign-off.</td></tr>
+    <tr><td><span class="num-badge">5</span></td><td><strong>Start build sprint 1</strong> — identity, booking and the driver offer loop first; scheduling follows the core ride loop.</td></tr>
+  </table>
+
+  <div class="endnote">Uko? plan v0.1 · 20 November 2026 · This is Step 0 of 8. The next deliverable is the Bolt reference report at the end of Phase 1, followed by the signed-off PRD and prototype. Version numbers and public feature descriptions are a planning snapshot and will be re-pinned at acquisition.</div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Uko? — Pilot Readiness Review (v0.4)</title>
+<style>
+  @page {
+    size: A4;
+    margin: 17mm 14mm 14mm 14mm;
+    @top-left { content: "Uko? · Pilot readiness review"; font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.6pt; color: #6B7E84; letter-spacing: .06em; text-transform: uppercase; vertical-align: bottom; padding-bottom: 2.2mm; }
+    @top-right { content: "v0.4 · 23 Nov 2026"; font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.6pt; color: #6B7E84; letter-spacing: .06em; text-transform: uppercase; vertical-align: bottom; padding-bottom: 2.2mm; }
+    @bottom-left { content: "Confidential — internal pilot assessment"; font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.4pt; color: #93A4A9; vertical-align: top; padding-top: 2mm; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: "Liberation Sans","DejaVu Sans",sans-serif; font-size: 6.6pt; color: #6B7E84; vertical-align: top; padding-top: 2mm; }
+  }
+  @page cover { margin: 0; @top-left{content:none} @top-right{content:none} @bottom-left{content:none} @bottom-right{content:none} }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Liberation Sans","DejaVu Sans",sans-serif; color: #14262C; font-size: 9.2pt; line-height: 1.42; }
+  .cover { page: cover; height: 297mm; background: #08222B; color: white; padding: 26mm 20mm; position: relative; page-break-after: always; }
+  .cover .mark { width: 20mm; height: 20mm; border-radius: 5mm; background: #0C8C86; display: flex; align-items: center; justify-content: center; font-size: 34pt; font-weight: 800; color: white; }
+  .cover .brand { margin-top: 12mm; font-size: 30pt; font-weight: 800; letter-spacing: -0.01em; }
+  .cover .brand span { color: #5FD3C8; }
+  .cover h1 { font-size: 34pt; line-height: 1.05; margin: 6mm 0 4mm; font-weight: 800; }
+  .cover .sub { font-size: 12pt; color: #B7D4CF; max-width: 150mm; }
+  .cover .meta { position: absolute; left: 20mm; bottom: 24mm; font-size: 9pt; color: #9FC3BD; }
+  .cover .gate { display: inline-block; margin-top: 10mm; padding: 3mm 6mm; background: #F5B942; color: #2B1C00; border-radius: 3mm; font-weight: 800; font-size: 11pt; letter-spacing: .02em; }
+  h2 { font-size: 15pt; margin: 0 0 3mm; color: #08222B; border-left: 3px solid #0C8C86; padding-left: 3mm; }
+  h3 { font-size: 10.5pt; margin: 5mm 0 2mm; color: #0A3B3A; }
+  p { margin: 0 0 2.6mm; }
+  .muted { color: #5C7077; }
+  .small { font-size: 8pt; }
+  .section { page-break-before: always; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 4mm 0; }
+  .kpi { border: 1px solid #DCE7E6; border-radius: 3mm; padding: 3.4mm; background: #FBFDFC; }
+  .kpi .n { font-size: 16pt; font-weight: 800; color: #0C8C86; }
+  .kpi .l { font-size: 7.6pt; color: #5C7077; text-transform: uppercase; letter-spacing: .05em; }
+  table { width: 100%; border-collapse: collapse; margin: 2.5mm 0 4mm; font-size: 8pt; }
+  th { background: #08222B; color: white; text-align: left; padding: 2mm 2.2mm; font-size: 7pt; text-transform: uppercase; letter-spacing: .05em; }
+  td { border-bottom: 1px solid #E4EEEC; padding: 2mm 2.2mm; vertical-align: top; }
+  tr:nth-child(even) td { background: #F8FBFA; }
+  .pill { display: inline-block; padding: .8mm 2.4mm; border-radius: 4mm; font-size: 6.8pt; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+  .green { background: #E9F7F4; color: #0B6E69; }
+  .amber { background: #FFF3DB; color: #8A5300; }
+  .red { background: #FDECEA; color: #A5241D; }
+  .callout { border: 1px solid #DCE7E6; border-left: 3px solid #0C8C86; background: #F6FAF9; border-radius: 2mm; padding: 3.2mm 4mm; margin: 3mm 0; }
+  .warn { border-left-color: #F5B942; background: #FFFBF0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  ul, ol { margin: 0 0 2.5mm 4.5mm; padding: 0; }
+  li { margin-bottom: 1.2mm; }
+  .check { list-style: none; margin-left: 0; }
+  .check li { position: relative; padding-left: 5.5mm; }
+  .check li::before { content: "☐"; position: absolute; left: 0; color: #0C8C86; font-size: 10pt; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; margin-top: 8mm; }
+  .sign .line { border-top: 1px solid #8FA6A2; margin-top: 12mm; padding-top: 1.6mm; font-size: 7.8pt; color: #5C7077; }
+  .evidence { font-size: 7.4pt; color: #5C7077; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="mark">?</div>
+  <div class="brand">Uko<span>?</span></div>
+  <h1>Pilot readiness<br>review</h1>
+  <div class="sub">Final engineering assessment: the MVP is built, validated on the test bench and packaged for deployment. What remains before the first pilot rider is external and legal, not product work.</div>
+  <div class="gate">CONDITIONAL GO — engineering complete, four external gates</div>
+  <div class="meta">v0.4 · 23 November 2026 · Prepared by the Uko? engineering team<br>Supersedes v0.3 · Evidence: final verification suite, device dry run, camera/gallery capture, production deployment config, pilot kit</div>
+</div>
+
+<h2>Executive summary</h2>
+<p><strong>Engineering scope is complete.</strong> The rider and driver Android apps, API, Postgres persistence, dispatch console and operations tooling have been built, exercised on the Lenovo TB-J616X and verified: 27/27 API dry-run checks, a full device-level booking→trip→payment run, 15/15 smoke checks, and a backup/restore drill with count verification. Camera and gallery document capture are live, and a production Docker/Caddy deployment stack with a tested migration runner is ready.</p>
+<p><strong>What remains is not product engineering:</strong> provision the external accounts and keys (SMS, FCM, Google Maps, Daraja), deploy to managed infrastructure with the domain/TLS, secure a named safety responder, and sign the privacy/DPA paperwork. Until those close, public beta is correctly gated.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="n">27/27</div><div class="l">API dry-run checks</div></div>
+  <div class="kpi"><div class="n">15/15</div><div class="l">Smoke checks</div></div>
+  <div class="kpi"><div class="n">9</div><div class="l">Device dry-run steps</div></div>
+  <div class="kpi"><div class="n">0</div><div class="l">Backup/restore mismatches</div></div>
+  <div class="kpi"><div class="n">4</div><div class="l">External gates left</div></div>
+  <div class="kpi"><div class="n">2–4 wks</div><div class="l">To pilot start once unblocked</div></div>
+</div>
+
+<div class="callout warn"><strong>Recommendation.</strong> Treat the engineering work as done and run the pilot once the four gates close. Start cash-first for the first days, keep the dispatch Money tab + alert webhook as the control room, and use the pilot kit’s daily cadence. Do not label the pilot “public beta” until live Maps and production payments have run clean for a full week.</div>
+
+<div class="section">
+<h2>1. Engineering definition of done</h2>
+<table>
+<thead><tr><th style="width:30%">Deliverable</th><th>Evidence</th><th style="width:10%">Status</th></tr></thead>
+<tbody>
+<tr><td>Installable rider + driver Android apps</td><td>Debug builds installed on the Lenovo; full device dry run (booking → driver accept → trip → M-Pesa payment).</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Auth, booking, matching</td><td>OTP/JWT, quote → ride → offer → shared trip states, pickup code, receipts.</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Scheduling</td><td>Single + recurring schedules with automatic activation and 14-day rollover.</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Payments</td><td>Cash + mock M-Pesa on bench; Daraja client/callback verified against a fake gateway; reconciliation view.</td><td><span class="pill amber">CODE READY</span></td></tr>
+<tr><td>Safety</td><td>Contacts, SOS flow, dispatch resolve, audit; acknowledgement simulation.</td><td><span class="pill amber">CODE READY</span></td></tr>
+<tr><td>Driver vetting</td><td>Camera/gallery document upload, ops approve/reject, online gate, expiry reminders.</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Dispatch &amp; ops</td><td>Overview/rides/incidents/scheduled/documents/money/audit/system; alert webhook; daily pilot check.</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Persistence &amp; data safety</td><td>27 tables, restart persistence, backup/restore drill passed.</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Deployment</td><td>API Dockerfile, PostGIS + migrate + API + Caddy stack, secrets template; migration runner tested on a fresh DB.</td><td><span class="pill green">DONE</span></td></tr>
+<tr><td>Pilot operations</td><td>Runbook, pilot kit (roles/scripts/drills/KPIs/go-no-go), dry-run scripts, alerting.</td><td><span class="pill green">DONE</span></td></tr>
+</tbody>
+</table>
+<p class="small muted">“CODE READY” means the code path is complete and tested against a local gateway; only credentials/accounts are outstanding.</p>
+</div>
+
+<div class="section">
+<h2>2. Readiness scorecard (v0.4)</h2>
+<table>
+<thead><tr><th style="width:19%">Area</th><th style="width:11%">Status</th><th style="width:42%">Evidence / what works</th><th>Remaining gap</th></tr></thead>
+<tbody>
+<tr><td>Booking &amp; pricing</td><td><span class="pill green">READY</span></td><td>Quote → confirm → matching → lifecycle; saved/recent places; fare breakdown</td><td>Fare policy in DB + ops UI (post-pilot)</td></tr>
+<tr><td>Matching &amp; trip</td><td><span class="pill green">READY</span></td><td>Real offers, shared states, pickup code, device dry run</td><td>Ranking/timeouts (post-pilot)</td></tr>
+<tr><td>Scheduling</td><td><span class="pill green">READY</span></td><td>Single + recurring activation, rollover</td><td>Payment-at-booking preference</td></tr>
+<tr><td>Calendar</td><td><span class="pill green">READY</span></td><td>Opt-in, on-device suggestions, prefill</td><td>Write-back V0.2</td></tr>
+<tr><td>Driver vetting &amp; app</td><td><span class="pill green">READY</span></td><td>Camera/gallery capture, approval gate, offers/trips/earnings/shift/inbox</td><td>Re-verification cadence (ops)</td></tr>
+<tr><td>Dispatch &amp; operations</td><td><span class="pill green">READY</span></td><td>All ops views, audit, alert webhook, pilot check, pilot kit</td><td>Production Next.js shell (optional)</td></tr>
+<tr><td>Persistence</td><td><span class="pill green">READY</span></td><td>27 tables, restart reload, backup/restore drill</td><td>Managed Postgres execution</td></tr>
+<tr><td>Observability</td><td><span class="pill green">READY</span></td><td>Readiness/metrics/alerts, crash intake both apps, analytics</td><td>External paging provider (webhook ready)</td></tr>
+<tr><td>Payments</td><td><span class="pill amber">CONDITIONAL</span></td><td>Daraja client verified against fake gateway; reconciliation</td><td><strong>Daraja credentials + public callback</strong></td></tr>
+<tr><td>Auth</td><td><span class="pill amber">CONDITIONAL</span></td><td>JWT, hashed refresh, OTP limits; SMS adapter tested</td><td><strong>SMS sender credentials</strong></td></tr>
+<tr><td>Notifications</td><td><span class="pill amber">CONDITIONAL</span></td><td>Outbox, FCM adapter, inboxes, expiry reminders</td><td><strong>FCM project + app token registration</strong></td></tr>
+<tr><td>Safety</td><td><span class="pill amber">CONDITIONAL</span></td><td>SOS flow, dispatch resolve, alerting</td><td><strong>Responder agreement + rota + drill</strong></td></tr>
+<tr><td>Maps &amp; location</td><td><span class="pill red">NOT READY</span></td><td>Stylised maps keep flows testable</td><td><strong>Google Maps key, live location, geocoding</strong></td></tr>
+<tr><td>Security / legal</td><td><span class="pill amber">CONDITIONAL</span></td><td>Headers, rate limits, audit, allow-list, TLS-ready deployment</td><td><strong>Production deploy + secrets + DPA/privacy</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2>3. The four external gates</h2>
+<table>
+<thead><tr><th style="width:22%">Gate</th><th style="width:44%">What specifically</th><th>Owner / action</th></tr></thead>
+<tbody>
+<tr><td><strong>1 · Credentials &amp; keys</strong></td><td>Africa’s Talking sender, Firebase project + FCM server key, Google Maps SDK key, Daraja sandbox passkey/shortcode + public callback. All code paths are implemented and fake-gateway verified.</td><td>Platform lead: open accounts, fill `app/deploy/.env`, run the pilot smoke + dry run against live credentials.</td></tr>
+<tr><td><strong>2 · Managed infrastructure</strong></td><td>Managed Postgres (or the provided Compose stack on a real host), domain A record, TLS via Caddy, secrets management, off-host backups.</td><td>Platform lead: deploy `app/deploy`, run `health/ready`, restore drill, monitor alerts.</td></tr>
+<tr><td><strong>3 · Safety responder</strong></td><td>Named private responder, on-call rota, SLA, SOS drill completed with ops.</td><td>Ops lead: sign agreement, publish rota, run the pilot-kit SOS drill.</td></tr>
+<tr><td><strong>4 · Legal &amp; privacy</strong></td><td>Privacy policy, rider/driver terms, DPA, retention policy, M-Pesa compliance review.</td><td>Ops/legal: sign before the first real rider.</td></tr>
+</tbody>
+</table>
+
+<h3>Post-pilot / public-beta items</h3>
+<p class="muted">Live Maps + geolocation, production payments reconciliation over a full week, Next.js dispatch shell, SMS fallback for push, ratings analytics in dispatch, driver payout automation, iOS.</p>
+
+<h3>Residual risks</h3>
+<table>
+<thead><tr><th style="width:26%">Risk</th><th style="width:10%">L/I</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Credential onboarding delay</td><td>M/H</td><td>Work started early; cash-only + stylised maps for week 1 if needed.</td></tr>
+<tr><td>Safety incident</td><td>L/C</td><td>Responder agreement, weekly drills, conservative zone, check-in.</td></tr>
+<tr><td>Driver supply</td><td>M/H</td><td>Recruit 2× needed; manual dispatch reassignment; incentives.</td></tr>
+<tr><td>Payment reconciliation</td><td>M/M</td><td>Daily Money tab, alert on mismatches, cash-first start.</td></tr>
+<tr><td>Data loss / outage</td><td>L/H</td><td>Managed DB + off-host backups; alerting webhook; restore drill.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2>4. Pilot start plan</h2>
+<div class="two">
+<div>
+<h3>Once the four gates close</h3>
+<ul class="check">
+<li>Run `pilot-check` + `pilot-smoke` + `pilot-dry-run` against production</li>
+<li>Approve driver documents and verify online gate</li>
+<li>SOS drill signed off by responder</li>
+<li>Install signed builds on pilot devices</li>
+<li>Go/no-go meeting with sign-off below</li>
+<li>Week 1: cash-only, 5 riders / 4 drivers, daily review</li>
+</ul>
+</div>
+<div>
+<h3>Pilot parameters</h3>
+<ul>
+<li>One Nairobi zone · Boda only · 4 weeks</li>
+<li>15–25 riders · 8–12 drivers</li>
+<li>No cancellation fee · 20% commission</li>
+<li>Private responder (no 999 dialling)</li>
+<li>KPIs: assignment &lt;3 min, completion ≥90%, cancellation ≤10%, zero unresolved incidents, CSAT ≥4.5/5</li>
+</ul>
+</div>
+</div>
+
+<div class="callout"><strong>Engineering handover.</strong> The repository contains the apps, API, DB migrations, deployment stack, dispatch console, seed/dry-run tooling, pilot kit and evidence. A new engineer can reproduce the test-bench flow from <code>README.md</code> + <code>testbench/README.md</code>; operations can run the pilot from the runbook + kit.</div>
+
+<h3>Sign-off</h3>
+<p class="small muted">By signing, owners confirm the four gates are closed and accept the pilot scope and risk mitigations for the internal pilot only.</p>
+<div class="sign">
+  <div class="line">Product owner · name / date</div>
+  <div class="line">Engineering lead · name / date</div>
+  <div class="line">Operations lead · name / date</div>
+</div>
+</div>
+
+</body>
+</html>

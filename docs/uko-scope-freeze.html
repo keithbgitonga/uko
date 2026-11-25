@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Uko? — MVP scope freeze v1.1</title>
+<meta name="author" content="Uko? project">
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm 15mm;
+    @bottom-left { content: "Uko? · MVP scope freeze v1.0 · 21 Nov 2026"; font-family: "Liberation Sans"; font-size: 6.6pt; color: #8A9DA2; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: "Liberation Sans"; font-size: 6.8pt; color: #6B7E84; }
+  }
+  html { font-family: "Liberation Sans", "DejaVu Sans", sans-serif; font-size: 9.6pt; line-height: 1.42; color: #172A31; }
+  body { margin: 0; }
+  h1,h2,h3 { color: #08222B; margin: 0; }
+  section { break-after: page; }
+  section.last { break-after: auto; }
+  .top { background: #08222B; color: #fff; padding: 12mm 12mm 10mm 12mm; border-radius: 2mm; margin-bottom: 5mm; }
+  .eyebrow { font-size: 7.2pt; letter-spacing: 0.18em; text-transform: uppercase; color: #6FE0D2; }
+  .title { font-size: 27pt; font-weight: bold; letter-spacing: -0.02em; margin-top: 3mm; }
+  .subtitle { font-size: 10.4pt; color: #CFE9E5; margin-top: 2mm; }
+  .meta { font-size: 7.6pt; color: #9BB6B9; margin-top: 4mm; }
+  h2 { font-size: 13.5pt; margin: 0 0 2.4mm 0; }
+  .h3 { font-size: 10.2pt; font-weight: bold; margin: 4ml 0 1.8mm 0; }
+  p { margin: 0 0 2.6mm 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1.6mm 0 3mm 0; }
+  th { background: #0B2530; color: #fff; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; padding: 1.9mm 2.1mm; }
+  td { font-size: 8pt; line-height: 1.38; padding: 1.8mm 2.1mm; border: 0.5pt solid #E1EBEA; vertical-align: top; }
+  tr:nth-child(even) td { background: #F5FAF9; }
+  td.lbl { font-weight: bold; color: #0A3038; white-space: nowrap; }
+  .callout { background: #E9F7F4; border-left: 3.5pt solid #0C8C86; padding: 2.8mm 3.4mm; margin: 2.6mm 0 3mm 0; }
+  .callout.amber { background: #FDF3E2; border-left-color: #E09A2E; }
+  .cols { width: 100%; border-collapse: separate; border-spacing: 3mm 0; margin-left: -3mm; }
+  .cols td { width: 50%; vertical-align: top; border: none; background: #fff; padding: 0; }
+  ul { margin: 1mm 0 2mm 0; padding-left: 4mm; }
+  li { margin-bottom: 1mm; font-size: 8pt; }
+  .pill { display: inline-block; border: 0.6pt solid #BFD9D5; background: #F1FAF8; border-radius: 1.2mm; padding: 0.7mm 2mm; font-size: 7.2pt; margin: 0 1mm 1.2mm 0; }
+  .small { font-size: 7.6pt; color: #5C7077; }
+  .sign { margin-top: 7mm; border-top: 0.6pt solid #CFDEDC; padding-top: 4mm; }
+  .sign table td { border: none; border-bottom: 0.7pt solid #9FB8B6; height: 10mm; background: #fff; }
+  .sign .cap { font-size: 6.8pt; text-transform: uppercase; letter-spacing: 0.1em; color: #6B7E84; border: none; height: auto; padding-top: 1.2mm; }
+  .num { font-size: 8pt; font-weight: bold; color: #0C8C86; }
+</style>
+</head>
+<body>
+
+<section>
+  <div class="top">
+    <div class="eyebrow">Scope freeze · decision record</div>
+    <div class="title">Uko<span style="color:#4FD9CA;">?</span> MVP — frozen scope</div>
+    <div class="subtitle">Boda-first pilot in one Nairobi zone. No cancellation fee. ~20% commission. Recurring rides and calendar suggestions included.</div>
+    <div class="meta">v1.1 · 21 November 2026 · Based on PRD v0.1 and Architecture Delta v0.1 (scope additions: recurring schedules, calendar suggestions)</div>
+  </div>
+
+  <h2>Decisions locked by the project owner</h2>
+  <table>
+    <tr><th style="width:44mm;">Decision</th><th>Value</th></tr>
+    <tr><td class="lbl">Category mix</td><td><strong>Boda only</strong> at pilot. Go, Comfort and XL are deferred until after the pilot.</td></tr>
+    <tr><td class="lbl">Commission</td><td><strong>~20%</strong> per completed ride, booked to the ledger; driver payout reports show net earnings. Weekly payout cadence, manual in MVP.</td></tr>
+    <tr><td class="lbl">Cancellation fee</td><td><strong>None during the pilot.</strong> The fee stays a server-owned policy field, set to 0; reliability is still tracked on both sides.</td></tr>
+    <tr><td class="lbl">Emergency response</td><td><strong>Private response model</strong> — Uko? ops on-call plus a private responder. No 999 integration in the pilot.</td></tr>
+    <tr><td class="lbl">Brand / name</td><td><strong>“Uko?”</strong> confirmed as the product name.</td></tr>
+    <tr><td class="lbl">Scheduling window</td><td><strong>45 minutes to 90 days ahead</strong> (pilot default — confirm or shorten).</td></tr>
+    <tr><td class="lbl">Recurring schedules</td><td><strong>In the MVP.</strong> Weekly pattern (selected weekdays), start/end, pause/resume, edit future, cancel one occurrence or the series. Max 8-week horizon; occurrences generated 14 days ahead; billed per occurrence at activation.</td></tr>
+    <tr><td class="lbl">Calendar suggestions</td><td><strong>In the MVP.</strong> Opt-in, read-only calendar access; on-device processing; suggestions for events with a location in the next 7 days; no calendar data stored server-side; no write-back.</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>Impact on the specs:</strong> PRD v0.1 and Architecture Delta v0.1 have been updated in place — category, cancellation, commission, emergency and brand now match these decisions, and <strong>recurring schedules + calendar suggestions are now part of MVP scope</strong> rather than 0.2.
+  </div>
+
+  <div class="callout amber">
+    <strong>Assumptions to confirm:</strong> 45-minute lead time / 90-day advance window; recurring max 8-week horizon and per-occurrence payment at activation; calendar suggestions limited to the next 7 days. All other items in this record are frozen.
+  </div>
+</section>
+
+<section>
+  <h2>Frozen MVP scope</h2>
+
+  <table class="cols"><tr>
+    <td>
+      <div style="font-size:10.2pt;font-weight:bold;color:#0A3038;margin-bottom:1.4mm;">In scope — release 0.1</div>
+      <ul>
+        <li>Android rider app, Android driver app, web dispatch console, public track link</li>
+        <li>Phone OTP identity; rider and driver profiles; driver documents and approval</li>
+        <li>On-demand booking — <strong>Boda</strong> category only, upfront quote, ETA, matching</li>
+        <li>Scheduled rides — single booking, 45 min–90 days, prepaid, pre-assigned, reminded</li>
+        <li><strong>Recurring schedules</strong> — weekly pattern, series management, occurrences generated ahead</li>
+        <li><strong>Calendar suggestions</strong> — opt-in, on-device, pre-fill scheduling from events</li>
+        <li>Driver offers, scheduled request list, navigation handoff, trip state machine, pickup code</li>
+        <li>MQTT tracking with polling fallback; share-trip link</li>
+        <li>M-Pesa STK and cash payments; 20% commission; receipts; ledger</li>
+        <li>SOS, incident reporting, trusted contacts, masked calls</li>
+        <li>Ratings, receipts, support cases, trip history</li>
+        <li>Dispatch: live map, rides board, schedule calendar, assign/reassign, refunds, incidents</li>
+        <li>English + Swahili; EAT; low-bandwidth behaviour</li>
+      </ul>
+    </td>
+    <td>
+      <div style="font-size:10.2pt;font-weight:bold;color:#0A3038;margin-bottom:1.4mm;">Deferred</div>
+      <ul>
+        <li>Go / Comfort / XL categories</li>
+        <li>Card payments and 3-D Secure (0.2)</li>
+        <li>Automated payouts (0.2)</li>
+        <li>Ride-check automation (0.2)</li>
+        <li>Audio recording / speech-to-text (0.3)</li>
+        <li>Price bidding and counter-offers (0.3)</li>
+        <li>Calendar write-back / smarter event parsing (V0.2)</li>
+        <li>Corporate/work profiles, driver rental/lending</li>
+        <li>iOS and additional cities</li>
+      </ul>
+      <div class="small" style="margin-top:2mm;">Boda-only keeps the pilot simple: one category, one fare rule set, one supply pool.</div>
+    </td>
+  </tr></table>
+
+  <h3 style="font-size:10.2pt;font-weight:bold;margin:3mm 0 1.4mm 0;">Launch gate — parity scorecard</h3>
+  <table>
+    <tr><th>Area</th><th style="width:14mm;">Weight</th><th style="width:16mm;">Target</th><th>How it is judged</th></tr>
+    <tr><td>Booking &amp; fare</td><td>14%</td><td>90%</td><td>Quote = receipt; ≤3 taps; cancellation policy shown (none in pilot)</td></tr>
+    <tr><td>Scheduled + recurring booking</td><td>20%</td><td>90%</td><td>Create/edit/cancel/assign/remind/activate; series create/pause/cancel-one; 50 scheduled rides</td></tr>
+    <tr><td>Live tracking &amp; ETA</td><td>15%</td><td>85%</td><td>All surfaces agree; ETA error ≤2 min p80</td></tr>
+    <tr><td>Driver trip flow</td><td>14%</td><td>90%</td><td>Offer→arrive→confirm→start→complete on 10 devices</td></tr>
+    <tr><td>Payments &amp; receipts</td><td>10%</td><td>80%</td><td>M-Pesa happy/failure/retry; receipt = ledger; per-occurrence charging; 20% commission</td></tr>
+    <tr><td>Safety &amp; support</td><td>10%</td><td>75%</td><td>SOS + share ≤2 taps; incident case created; private response reachable</td></tr>
+    <tr><td>Dispatch &amp; operations</td><td>9%</td><td>80%</td><td>See/assign/reassign/cancel/refund from one screen; series context</td></tr>
+    <tr><td>Calendar suggestions</td><td>3%</td><td>80%</td><td>Permission grant/deny; suggestion pre-fill; revoke; no server storage</td></tr>
+    <tr><td>Reliability &amp; performance</td><td>5%</td><td>NFR</td><td>2-hour load test + pilot-week metrics</td></tr>
+  </table>
+  <p class="small">Weighted score ≥ 85% to launch; any row below target needs a signed waiver with mitigation. Detail in PRD §9.</p>
+</section>
+
+<section class="last">
+  <h2>Build sequence and sign-off</h2>
+
+  <table>
+    <tr><th style="width:8mm;">#</th><th style="width:44mm;">Phase</th><th>Deliverable / gate</th></tr>
+    <tr><td class="num">1</td><td class="lbl">Foundation</td><td>Identity/OTP, users, drivers, vehicles, one zone, Boda fare seed, API gateway, CI.</td></tr>
+    <tr><td class="num">2</td><td class="lbl">Booking + tracking</td><td>Quotes, on-demand ride, matching, MQTT + polling, cash payment, rider/driver core loop; calendar suggestions (client-side).</td></tr>
+    <tr><td class="num">3</td><td class="lbl">M-Pesa + ledger</td><td>STK state machine, callbacks, 20% commission ledger, receipts, refunds.</td></tr>
+    <tr><td class="num">4</td><td class="lbl">Scheduling</td><td>Time-options API, booking aggregate, assignment jobs, reminders, activation; recurring series (expansion, pause/resume, per-occurrence payment).</td></tr>
+    <tr><td class="num">5</td><td class="lbl">Dispatch console</td><td>Live map, boards, calendar, assign/reassign, exception queue, incident handling.</td></tr>
+    <tr><td class="num">6</td><td class="lbl">Safety + hardening</td><td>SOS, share link, masked calls, pickup code, load/security review, store assets.</td></tr>
+    <tr><td class="num">7</td><td class="lbl">Single-zone pilot</td><td>15–25 Boda riders, parity gate, pilot report, go/no-go.</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>What is needed to start build sprint 1:</strong> sign-off on this scope record and the PRD, plus confirmation of the scheduling window and recurring/calendar defaults. Everything else is frozen.
+  </div>
+
+  <div class="sign">
+    <table>
+      <tr><td style="width:50%"></td><td style="width:4%"></td><td style="width:46%"></td></tr>
+      <tr><td class="cap">Product owner — name / signature</td><td class="cap"></td><td class="cap">Date</td></tr>
+      <tr><td></td><td></td><td></td></tr>
+      <tr><td class="cap">Engineering lead — name / signature</td><td class="cap"></td><td class="cap">Date</td></tr>
+    </table>
+  </div>
+
+  <p class="small" style="margin-top:5mm;">Source documents: <strong>spec/prd-v0.1.md</strong> · <strong>spec/architecture-delta-v0.1.md</strong> · Phase 1 evidence in <strong>recon/</strong>. Clean-room: no Bolt code, assets or protected UI are reused.<br><strong>Change log v1.1:</strong> recurring schedules and calendar suggestions moved into MVP scope at owner request.</p>
+</section>
+
+</body>
+</html>

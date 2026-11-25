@@ -1,0 +1,62 @@
+# Render Blueprint — Uko? API + dispatch console.
+# Prereq: a Neon Postgres database; set DATABASE_URL when prompted.
+services:
+  - type: web
+    name: uko-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerContext: ./app
+    dockerfilePath: ./app/services/api/Dockerfile
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_STORE
+        value: postgres
+      - key: PERSISTENCE_STORE
+        value: postgres
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: SKIP_POSTGIS
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      - key: DISPATCH_PHONES
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://uko-dispatch.onrender.com
+      - key: EXPOSE_DEV_OTP
+        value: "false"
+      - key: SMS_PROVIDER
+        value: africastalking
+      - key: AFRICASTALKING_USERNAME
+        sync: false
+      - key: AFRICASTALKING_API_KEY
+        sync: false
+      - key: AFRICASTALKING_SENDER_ID
+        sync: false
+      - key: FCM_PROJECT_ID
+        sync: false
+      - key: FCM_CLIENT_EMAIL
+        sync: false
+      - key: FCM_PRIVATE_KEY
+        sync: false
+      - key: DOCUMENTS_REQUIRED
+        value: "false"
+
+  - type: static
+    name: uko-dispatch
+    staticPublishPath: ./app/apps/dispatch/web
+    plan: free
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

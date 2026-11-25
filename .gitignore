@@ -1,0 +1,28 @@
+# Secrets and generated config — never commit
+app/apps/rider/android/app/google-services.json
+app/apps/driver/android/app/google-services.json
+**/android/local.properties
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+service-account*.json
+**/firebase-adminsdk*.json
+*.jks
+*.keystore
+app/services/api/uploads/
+tools/pg/backups/
+node_modules/
+build/
+dist/
+*.log
+
+# Deployment repo excludes (kept locally)
+recon/
+testbench/evidence/
+tools/pg/data/
+tools/pg/run/
+app/apps/*/.dart_tool/
+app/apps/*/android/.gradle/
+app/apps/*/android/app/.cxx/
+*.apk
