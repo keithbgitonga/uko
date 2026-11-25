@@ -345,6 +345,12 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Rider + driver APKs rebuilt with `API_BASE_URL=https://uko-pilot-api.onrender.com/v1` and installed; login screens show the Render API (dev OTP disabled, SMS login).
 - Notes: `render-live-notes.txt`; hosting guide `docs/Free-Hosting.md`.
 
+### 2026-11-25 — one-tap test logins
+- Guarded `ALLOW_TEST_LOGINS=true` test accounts for rider, driver, dispatch, safety and admin; normal SMS OTP remains.
+- Rider/driver login pages show a **Test logins** card; dispatch login has one-tap buttons.
+- Verified on the tablet: `test-login-01-rider.png`, `test-login-02-driver.png`; notes `test-logins-notes.txt`.
+- **Disable `ALLOW_TEST_LOGINS` before public launch.**
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
