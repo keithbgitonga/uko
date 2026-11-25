@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { OtpRequestDto } from './dto/otp-request.dto';
@@ -9,16 +9,6 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
-
-  @Get('test-accounts')
-  testAccounts() {
-    return { accounts: this.auth.testAccounts() };
-  }
-
-  @Post('test-login')
-  testLogin(@Body() body: { role?: string }) {
-    return this.auth.testLogin((body.role ?? '') as never);
-  }
 
   @Post('otp/request')
   requestOtp(@Body() dto: OtpRequestDto) {

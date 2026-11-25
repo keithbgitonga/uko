@@ -1,40 +1,44 @@
-# One-tap test logins
+# Test credentials (no one-tap login)
 
-For pilot/demo testing. **Do not leave enabled on a public production deployment.**
-
-Controlled by:
+For pilot testing, normal phone+OTP login accepts fixed test accounts. This is controlled by:
 
 ```text
-ALLOW_TEST_LOGINS=true
+TEST_OTP=123456
 ```
 
-When enabled, the API exposes:
+When `TEST_OTP` is set, these numbers skip SMS and accept that OTP:
 
-```text
-GET  /v1/auth/test-accounts
-POST /v1/auth/test-login   {"role":"rider|driver|dispatch|safety|admin"}
-```
-
-## Accounts
-
-| Role | Phone | Where |
+| Role | Phone | OTP |
 |---|---|---|
-| Rider | +254712345678 | Rider app |
-| Driver | +254700000001 | Driver app |
-| Dispatch | +254700000010 | Dispatch console |
-| Safety | +254700000011 | Dispatch console |
-| Admin | +254700000012 | Dispatch console |
+| Rider | +254712345678 | 123456 |
+| Driver | +254700000001 | 123456 |
+| Dispatch | +254700000010 | 123456 |
+| Safety | +254700000011 | 123456 |
+| Admin | +254700000012 | 123456 |
 
-## Apps
+## Rider app
 
-- Rider app: **Test logins** card under the phone form → one tap signs in as Test Rider.
-- Driver app: **Test logins** card → one tap signs in as Test Driver.
-- Dispatch: **Show test logins** on the login screen → Dispatch, Safety, Admin buttons.
-- The normal SMS OTP flow remains available.
+- Number is prefilled with **+254712345678**
+- Tap **Send code** — the test code is filled automatically
+- Tap **Verify and continue**
 
-## Safety
+## Driver app
 
-- Set `ALLOW_TEST_LOGINS=false` and redeploy before inviting real riders/drivers.
-- The test accounts have no SMS/OTP protection while enabled.
-- Test phones are allowed into dispatch only while `ALLOW_TEST_LOGINS=true`.
-- Rotate `JWT_SECRET` and redeploy after switching test logins off if the URL has been shared.
+- Number prefilled with **+254700000001**
+- Tap **Send code**, then **Verify and continue**
+
+## Dispatch console
+
+- Phone prefilled with **+254700000010**
+- Tap **Send code** — the dev/test code is shown/filled
+- Tap **Open console**
+
+The safety/admin test numbers can also be entered manually on the dispatch login.
+
+## Disabling before launch
+
+Remove/blank `TEST_OTP` in Render (or set it to an empty string), then redeploy.
+Fixed numbers then require normal SMS OTP; the test hint stays harmless.
+
+- Rotate `JWT_SECRET` if the URL was shared while test OTP was enabled.
+- Keep `DISPATCH_PHONES` restricted to real ops numbers for production.

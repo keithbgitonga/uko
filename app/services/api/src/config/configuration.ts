@@ -52,7 +52,11 @@ export default () => ({
     nominatimUrl: process.env.NOMINATIM_URL ?? 'https://nominatim.openstreetmap.org/search',
     userAgent: process.env.PLACES_USER_AGENT ?? 'Uko/0.1 (pilot; ops@uko.example)',
   },
-  allowTestLogins: (process.env.ALLOW_TEST_LOGINS ?? 'false').toLowerCase() === 'true',
+  testOtp: (process.env.TEST_OTP ?? '').trim(),
+  testPhones: (process.env.TEST_PHONES ?? '+254712345678,+254700000001,+254700000010,+254700000011,+254700000012')
+    .split(',').map((p) => p.trim()).filter(Boolean),
+  testOpsPhones: (process.env.TEST_OPS_PHONES ?? '+254700000010,+254700000011,+254700000012')
+    .split(',').map((p) => p.trim()).filter(Boolean),
   dispatchPhones: (process.env.DISPATCH_PHONES ?? '')
     .split(',')
     .map((phone) => phone.trim())

@@ -154,21 +154,6 @@ class OtpRequestResult {
   final String? devCode;
 }
 
-class TestAccountOption {
-  const TestAccountOption({required this.role, required this.phone, required this.name, required this.description});
-  final String role;
-  final String phone;
-  final String name;
-  final String description;
-
-  factory TestAccountOption.fromJson(Map<String, dynamic> json) => TestAccountOption(
-        role: (json['role'] ?? '') as String,
-        phone: (json['phone'] ?? '') as String,
-        name: (json['name'] ?? '') as String,
-        description: (json['description'] ?? '') as String,
-      );
-}
-
 class PlaceSuggestion {
   const PlaceSuggestion({required this.id, required this.name, required this.address, required this.lat, required this.lng});
   final String id;
@@ -398,26 +383,6 @@ class ApiClient {
       refreshToken: (tokens['refreshToken'] ?? '') as String,
       user: (json['user'] ?? <String, dynamic>{}) as Map<String, dynamic>,
     );
-  }
-
-  Future<List<TestAccountOption>> testAccounts() async {
-    final json = await _get('/auth/test-accounts');
-    return ((json['accounts'] as List?) ?? [])
-        .map((e) => TestAccountOption.fromJson((e as Map).cast<String, dynamic>()))
-        .where((a) => a.role == 'rider')
-        .toList();
-  }
-
-  Future<AuthSession> testLogin(String role) async {
-    final json = await _post('/auth/test-login', {'role': role});
-    final tokens = (json['tokens'] ?? <String, dynamic>{}) as Map<String, dynamic>;
-    final session = AuthSession(
-      accessToken: (tokens['accessToken'] ?? '') as String,
-      refreshToken: (tokens['refreshToken'] ?? '') as String,
-      user: (json['user'] ?? <String, dynamic>{}) as Map<String, dynamic>,
-    );
-    accessToken = session.accessToken;
-    return session;
   }
 
   Future<Map<String, dynamic>> me(String accessToken) async {
@@ -815,7 +780,7 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   StreamSubscription<RemoteMessage>? _notificationTapSub;
   final _api = ApiClient(baseUrl: kApiBase);
-  final _phone = TextEditingController(text: kDebugMode ? '+254712345678' : '');
+  final _phone = TextEditingController(text: '+254712345678');
   final _otp = TextEditingController();
 
   AuthStep _step = AuthStep.phone;
@@ -823,38 +788,6 @@ class _SignInPageState extends State<SignInPage> {
   String? _error;
   String? _devCode;
   AuthSession? _session;
-  List<TestAccountOption> _testAccounts = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTestAccounts();
-  }
-
-  Future<void> _loadTestAccounts() async {
-    try {
-      final accounts = await _api.testAccounts();
-      if (mounted) setState(() => _testAccounts = accounts);
-    } catch (_) {
-      // Test logins are disabled on this API.
-    }
-  }
-
-  Future<void> _testLogin(TestAccountOption account) async {
-    setState(() { _busy = true; _error = null; });
-    try {
-      final session = await _api.testLogin(account.role);
-      if (!mounted) return;
-      setState(() { _busy = false; _session = session; _step = AuthStep.home; });
-      unawaited(_registerPush(session));
-      _listenForNotificationTaps();
-    } on ApiException catch (e) {
-      setState(() { _busy = false; _error = e.message; });
-    } catch (e) {
-      setState(() { _busy = false; _error = 'Test login failed. $e'; });
-    }
-  }
-
   @override
   void dispose() {
     _notificationTapSub?.cancel();
@@ -1003,6 +936,12 @@ class _SignInPageState extends State<SignInPage> {
           keyboardType: TextInputType.phone,
           decoration: const InputDecoration(labelText: 'Phone number', hintText: '+254712345678'),
         ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(color: const Color(0xFFF2F7F6), borderRadius: BorderRadius.circular(10)),
+          child: const Text('Pilot test login: +254712345678 · OTP 123456', style: TextStyle(fontSize: 12, color: Color(0xFF3D5A60))),
+        ),
         if (_error != null) ...[
           const SizedBox(height: 10),
           Text(_error!, style: const TextStyle(color: Color(0xFFB3261E))),
@@ -1019,29 +958,6 @@ class _SignInPageState extends State<SignInPage> {
                 : const Text('Send code'),
           ),
         ),
-        if (_testAccounts.isNotEmpty) ...[
-          const SizedBox(height: 22),
-          const Divider(),
-          const SizedBox(height: 10),
-          const Text('Test logins', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          const Text('Pilot accounts — one tap, no SMS required.', style: TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
-          const SizedBox(height: 10),
-          for (final account in _testAccounts)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: OutlinedButton(
-                key: Key('test_login_${account.role}'),
-                onPressed: _busy ? null : () => _testLogin(account),
-                style: OutlinedButton.styleFrom(alignment: Alignment.centerLeft, padding: const EdgeInsets.all(14)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(account.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 2),
-                  Text(account.description, style: const TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
-                ]),
-              ),
-            ),
-        ],
         const SizedBox(height: 18),
         Text('API: $kApiBase', style: const TextStyle(fontSize: 11, color: Color(0xFF8A9DA2))),
       ],

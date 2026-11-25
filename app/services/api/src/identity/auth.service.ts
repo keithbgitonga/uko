@@ -4,7 +4,6 @@ import { createHash, randomInt, randomUUID } from 'node:crypto';
 import * as jwt from 'jsonwebtoken';
 import { DatabaseService } from '../database/database.service';
 import { SmsService } from './sms.service';
-import { TEST_ACCOUNTS, TEST_OPS_ROLES, TestAccount, TestRole } from './test-accounts';
 
 export interface DevUser {
   id: string;
@@ -48,38 +47,38 @@ export class AuthService {
     return this.config.get<string>('authStore') === 'postgres';
   }
 
-  testAccounts(): TestAccount[] {
-    if (!this.config.get<boolean>('allowTestLogins')) {
-      throw new NotFoundException({ code: 'TEST_LOGINS_DISABLED' });
-    }
-    return TEST_ACCOUNTS;
+  private testCodeFor(phone: string): string | null {
+    const code = this.config.get<string>('testOtp') ?? '';
+    const phones = this.config.get<string[]>('testPhones') ?? [];
+    return code && phones.includes(phone) ? code : null;
+  }
+
+  private testNameFor(phone: string): string | null {
+    const names: Record<string, string> = {
+      '+254712345678': 'Test Rider',
+      '+254700000001': 'Peter M. (Test Driver)',
+      '+254700000010': 'Test Dispatcher',
+      '+254700000011': 'Test Safety Lead',
+      '+254700000012': 'Test Admin',
+    };
+    return names[phone] ?? null;
   }
 
   isTestOpsPhone(phone: string): boolean {
-    return (
-      this.config.get<boolean>('allowTestLogins') === true &&
-      TEST_ACCOUNTS.some((a) => TEST_OPS_ROLES.includes(a.role) && a.phone === phone)
-    );
-  }
-
-  async testLogin(role: TestRole): Promise<{ user: DevUser; tokens: TokenPair; role: TestRole; account: TestAccount }> {
-    if (!this.config.get<boolean>('allowTestLogins')) {
-      throw new NotFoundException({ code: 'TEST_LOGINS_DISABLED' });
-    }
-    const account = TEST_ACCOUNTS.find((a) => a.role === role);
-    if (!account) throw new NotFoundException({ code: 'TEST_ROLE_UNKNOWN' });
-    const user = this.usePostgres
-      ? await this.upsertUser(account.phone, account.name)
-      : this.memoryUser(account.phone, account.name);
-    const tokens = await this.issueTokens(user.id);
-    return { user, tokens, role, account };
+    if (!this.config.get<string>('testOtp')) return false;
+    const ops = this.config.get<string[]>('testOpsPhones') ?? [];
+    return ops.includes(phone);
   }
 
   async requestOtp(phone: string) {
-    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
     const ttl = this.config.get<number>('otp.ttlSeconds') ?? 300;
+    const testCode = this.testCodeFor(phone);
+    if (testCode) {
+      this.otps.set(phone, { code: testCode, expiresAt: Date.now() + ttl * 1000, attempts: 0 });
+      return { sent: true, channel: 'test', expiresInSeconds: ttl, dev_code: testCode, test_mode: true };
+    }
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
     this.otps.set(phone, { code, expiresAt: Date.now() + ttl * 1000, attempts: 0 });
-
     const delivery = await this.sms.sendOtp(phone, code);
     const expose = this.config.get<boolean>('otp.exposeDevOtp');
     const isDev = (this.config.get<string>('env') ?? 'development') !== 'production';
@@ -92,10 +91,17 @@ export class AuthService {
   }
 
   async verifyOtp(phone: string, code: string): Promise<{ user: DevUser; tokens: TokenPair }> {
-    this.assertOtp(phone, code);
-    this.otps.delete(phone);
+    const testCode = this.testCodeFor(phone);
+    if (testCode) {
+      if (code !== testCode) throw new UnauthorizedException({ code: 'OTP_INVALID' });
+      this.otps.delete(phone);
+    } else {
+      this.assertOtp(phone, code);
+      this.otps.delete(phone);
+    }
 
-    const user = this.usePostgres ? await this.upsertUser(phone) : this.memoryUser(phone);
+    const name = this.testNameFor(phone);
+    const user = this.usePostgres ? await this.upsertUser(phone, name) : this.memoryUser(phone, name);
     const tokens = await this.issueTokens(user.id);
     return { user, tokens };
   }

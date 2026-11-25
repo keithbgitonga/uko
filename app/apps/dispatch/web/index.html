@@ -15,15 +15,14 @@
       <label class="field-label">API URL</label>
       <input id="api-input" class="input" placeholder="https://your-api.example.com/v1" autocomplete="url" />
       <label class="field-label">Phone</label>
-      <input id="phone" class="input" value="+254712345678" autocomplete="tel" />
+      <input id="phone" class="input" value="+254700000010" autocomplete="tel" />
+      <p class="muted small">Pilot test login: <strong>+254700000010</strong> · OTP <strong>123456</strong></p>
       <button id="send-code" class="btn btn-primary">Send code</button>
       <div id="otp-block" class="hidden">
         <label class="field-label">Code <span id="dev-code" class="dev-code"></span></label>
         <input id="otp" class="input" inputmode="numeric" maxlength="6" placeholder="6-digit code" />
         <button id="verify" class="btn btn-primary">Open console</button>
       </div>
-      <button id="load-test-logins" class="link-button" type="button">Show test logins</button>
-      <div id="test-accounts" class="test-accounts hidden"></div>
       <p id="login-error" class="error"></p>
       <p class="muted small">API: <span id="api-base"></span></p>
     </div>
