@@ -97,9 +97,14 @@ If you have a domain on Cloudflare, `cloudflared tunnel login` + a named tunnel 
 `api.yourdomain` → `localhost:3100` gives a stable URL with this machine as host. Keep the
 machine powered/online; use Render for resilience instead.
 
-## Current temporary demo
+## Live deployment (2026-11-25)
 
-Cloudflare Quick Tunnels are still running from the bench:
+- API: `https://uko-pilot-api.onrender.com/v1`
+- Dispatch: `https://uko-pilot-dispatch.onrender.com/`
+- Neon project: eu-central-1 (Frankfurt), schema migrated (12 migrations, 27 tables, PostGIS skipped).
+- API `/v1/health/ready` reports database ok; CORS allows the dispatch origin.
+- Login: OTP sent by SMS (dev OTP disabled).
+
+Cloudflare Quick Tunnels from the bench remain as an emergency local fallback:
 API `https://trains-referred-morris-phd.trycloudflare.com/v1` and dispatch
-`https://greetings-cruise-stayed-opinions.trycloudflare.com/`. These are ephemeral and for
-testing only; replace them with the Render URLs above.
+`https://greetings-cruise-stayed-opinions.trycloudflare.com/`.
