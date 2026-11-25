@@ -339,6 +339,12 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Free public endpoints via Cloudflare Quick Tunnels: API and dispatch console (see `docs/Free-Hosting.md`, `docs/Dispatch-Setup.md`); rider APK rebuilt with the public API URL and tested without adb reverse.
 - Dispatch console live through the tunnel with CORS confirmed; `tools/dispatch-link.mjs` generates a login URL.
 
+### 2026-11-25 — live Render + Neon deployment
+- API: `https://uko-pilot-api.onrender.com/v1` — `/v1/health` and `/v1/health/ready` ok (Neon database reachable); CORS allows the dispatch origin.
+- Dispatch: `https://uko-pilot-dispatch.onrender.com/` — static site deployed.
+- Rider + driver APKs rebuilt with `API_BASE_URL=https://uko-pilot-api.onrender.com/v1` and installed; login screens show the Render API (dev OTP disabled, SMS login).
+- Notes: `render-live-notes.txt`; hosting guide `docs/Free-Hosting.md`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
