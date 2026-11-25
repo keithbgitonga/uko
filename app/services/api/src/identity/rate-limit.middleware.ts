@@ -14,6 +14,13 @@ export class OtpRateLimitMiddleware implements NestMiddleware {
     const phone = typeof req.body?.phone === 'string' ? req.body.phone : '';
     const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
     const now = Date.now();
+    const testCode = this.config.get<string>('testOtp') ?? '';
+    const testPhones = this.config.get<string[]>('testPhones') ?? [];
+    if (testCode && testPhones.includes(phone)) {
+      // Fixed pilot credentials: no SMS is sent and repeated test logins are expected.
+      next();
+      return;
+    }
 
     if (path.endsWith('/auth/otp/request')) {
       const perPhone = this.config.get<number>('rateLimit.otpPerPhoneHour') ?? 3;
