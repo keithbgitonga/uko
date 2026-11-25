@@ -331,9 +331,54 @@ $('refresh').onclick = refresh;
 $('signout').onclick = () => { localStorage.removeItem(TOKEN_KEY); token = ''; clearInterval(refreshTimer); showLogin(); };
 document.querySelectorAll('[data-view]').forEach((el) => { el.onclick = () => setView(el.dataset.view); });
 
+async function loadTestAccounts() {
+  const typed = ($('api-input')?.value || '').trim().replace(/\/$/, '');
+  if (typed) {
+    apiBase = typed;
+    localStorage.setItem(API_KEY, apiBase);
+    $('api-base').textContent = apiBase;
+  }
+  if (!apiBase) { $('login-error').textContent = 'Enter the API URL first'; return; }
+  $('login-error').textContent = '';
+  try {
+    const body = await api('/auth/test-accounts');
+    const accounts = body.accounts || [];
+    const box = $('test-accounts');
+    box.innerHTML = '';
+    if (!accounts.length) { box.classList.add('hidden'); return; }
+    for (const account of accounts) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'test-account';
+      button.innerHTML = `<span class="role">${escapeHtml(account.role)}</span><strong>${escapeHtml(account.name)}</strong><span>${escapeHtml(account.description)}</span>`;
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          const result = await api('/auth/test-login', { method: 'POST', body: JSON.stringify({ role: account.role }) });
+          token = result.tokens.accessToken;
+          localStorage.setItem(TOKEN_KEY, token);
+          $('ops-phone').textContent = `${result.user.phone} · ${account.role}`;
+          showApp();
+        } catch (err) {
+          $('login-error').textContent = err.message;
+          button.disabled = false;
+        }
+      };
+      box.appendChild(button);
+    }
+    box.classList.remove('hidden');
+  } catch (err) {
+    $('login-error').textContent = err.message;
+    $('test-accounts').classList.add('hidden');
+  }
+}
+
+$('load-test-logins').onclick = loadTestAccounts;
+
 if (token && apiBase) {
   $('ops-phone').textContent = 'Signed in';
   showApp();
 } else {
   showLogin();
+  if (apiBase) loadTestAccounts();
 }

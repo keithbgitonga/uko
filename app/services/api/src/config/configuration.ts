@@ -52,6 +52,7 @@ export default () => ({
     nominatimUrl: process.env.NOMINATIM_URL ?? 'https://nominatim.openstreetmap.org/search',
     userAgent: process.env.PLACES_USER_AGENT ?? 'Uko/0.1 (pilot; ops@uko.example)',
   },
+  allowTestLogins: (process.env.ALLOW_TEST_LOGINS ?? 'false').toLowerCase() === 'true',
   dispatchPhones: (process.env.DISPATCH_PHONES ?? '')
     .split(',')
     .map((phone) => phone.trim())

@@ -170,6 +170,25 @@ class ApiClient {
     return session;
   }
 
+  Future<List<TestAccountOption>> testAccounts() async {
+    final json = await _get('/auth/test-accounts');
+    return ((json['accounts'] as List?) ?? [])
+        .map((e) => TestAccountOption.fromJson((e as Map).cast<String, dynamic>()))
+        .where((a) => a.role == 'driver')
+        .toList();
+  }
+
+  Future<AuthSession> testLogin(String role) async {
+    final json = await _post('/auth/test-login', {'role': role});
+    final tokens = (json['tokens'] ?? <String, dynamic>{}) as Map<String, dynamic>;
+    final session = AuthSession(
+      accessToken: (tokens['accessToken'] ?? '') as String,
+      user: (json['user'] ?? <String, dynamic>{}) as Map<String, dynamic>,
+    );
+    accessToken = session.accessToken;
+    return session;
+  }
+
   Future<void> registerDevice(String token) async {
     await _post('/notifications/devices', {'token': token, 'platform': 'android'});
   }
@@ -324,6 +343,21 @@ class DriverTrip {
   }
 }
 
+class TestAccountOption {
+  const TestAccountOption({required this.role, required this.phone, required this.name, required this.description});
+  final String role;
+  final String phone;
+  final String name;
+  final String description;
+
+  factory TestAccountOption.fromJson(Map<String, dynamic> json) => TestAccountOption(
+        role: (json['role'] ?? '') as String,
+        phone: (json['phone'] ?? '') as String,
+        name: (json['name'] ?? '') as String,
+        description: (json['description'] ?? '') as String,
+      );
+}
+
 class RouteStep {
   const RouteStep({required this.instruction, required this.distanceM});
   final String instruction;
@@ -465,6 +499,38 @@ class _SignInPageState extends State<SignInPage> {
   bool _busy = false;
   String? _error;
   String? _devCode;
+  List<TestAccountOption> _testAccounts = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTestAccounts();
+  }
+
+  Future<void> _loadTestAccounts() async {
+    try {
+      final accounts = await _api.testAccounts();
+      if (mounted) setState(() => _testAccounts = accounts);
+    } catch (_) {
+      // Test logins are disabled on this API.
+    }
+  }
+
+  Future<void> _testLogin(TestAccountOption account) async {
+    setState(() { _busy = true; _error = null; });
+    try {
+      final session = await _api.testLogin(account.role);
+      if (!mounted) return;
+      unawaited(registerPushForApi(_api));
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (_) => DriverHomePage(api: _api, session: session),
+      ));
+    } on ApiException catch (e) {
+      setState(() { _busy = false; _error = e.message; });
+    } catch (e) {
+      setState(() { _busy = false; _error = 'Test login failed. $e'; });
+    }
+  }
 
   @override
   void dispose() {
@@ -569,6 +635,29 @@ class _SignInPageState extends State<SignInPage> {
                 ),
                 if (_otpStep)
                   TextButton(onPressed: () => setState(() { _otpStep = false; _error = null; }), child: const Text('Use a different number')),
+                if (!_otpStep && _testAccounts.isNotEmpty) ...[
+                  const SizedBox(height: 22),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  const Text('Test logins', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  const Text('Pilot accounts — one tap, no SMS required.', style: TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
+                  const SizedBox(height: 10),
+                  for (final account in _testAccounts)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: OutlinedButton(
+                        key: Key('test_login_${account.role}'),
+                        onPressed: _busy ? null : () => _testLogin(account),
+                        style: OutlinedButton.styleFrom(alignment: Alignment.centerLeft, padding: const EdgeInsets.all(14)),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(account.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 2),
+                          Text(account.description, style: const TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
+                        ]),
+                      ),
+                    ),
+                ],
                 const SizedBox(height: 14),
                 Text('API: $kApiBase', style: const TextStyle(fontSize: 11, color: Color(0xFF8A9DA2))),
               ]),

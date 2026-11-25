@@ -80,3 +80,17 @@ tr:last-child td { border-bottom: none; }
 .chip.SCHEDULED, .chip.ACTIVE { background: #e8f1ff; color: #1d4ed8; }
 .row-actions { display: flex; gap: 8px; }
 .empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+
+
+/* One-tap test accounts (pilot only; shown when ALLOW_TEST_LOGINS=true) */
+.test-accounts { display: grid; gap: 8px; margin: 14px 0 4px; }
+.test-account {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; text-align: left; cursor: pointer;
+  background: #f4f8f8; color: #08222b; border: 1px solid #d5e3e3;
+  border-radius: 12px; padding: 11px 12px; font: inherit;
+}
+.test-account:hover { border-color: #0c8c86; background: #ecf7f6; }
+.test-account strong { font-size: 13px; }
+.test-account span { font-size: 12px; color: #5c7077; }
+.test-account .role { text-transform: uppercase; letter-spacing: .06em; font-size: 10px; color: #0c8c86; font-weight: 700; }

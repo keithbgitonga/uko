@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomInt, randomUUID } from 'node:crypto';
 import * as jwt from 'jsonwebtoken';
 import { DatabaseService } from '../database/database.service';
 import { SmsService } from './sms.service';
+import { TEST_ACCOUNTS, TEST_OPS_ROLES, TestAccount, TestRole } from './test-accounts';
 
 export interface DevUser {
   id: string;
@@ -45,6 +46,33 @@ export class AuthService {
 
   private get usePostgres(): boolean {
     return this.config.get<string>('authStore') === 'postgres';
+  }
+
+  testAccounts(): TestAccount[] {
+    if (!this.config.get<boolean>('allowTestLogins')) {
+      throw new NotFoundException({ code: 'TEST_LOGINS_DISABLED' });
+    }
+    return TEST_ACCOUNTS;
+  }
+
+  isTestOpsPhone(phone: string): boolean {
+    return (
+      this.config.get<boolean>('allowTestLogins') === true &&
+      TEST_ACCOUNTS.some((a) => TEST_OPS_ROLES.includes(a.role) && a.phone === phone)
+    );
+  }
+
+  async testLogin(role: TestRole): Promise<{ user: DevUser; tokens: TokenPair; role: TestRole; account: TestAccount }> {
+    if (!this.config.get<boolean>('allowTestLogins')) {
+      throw new NotFoundException({ code: 'TEST_LOGINS_DISABLED' });
+    }
+    const account = TEST_ACCOUNTS.find((a) => a.role === role);
+    if (!account) throw new NotFoundException({ code: 'TEST_ROLE_UNKNOWN' });
+    const user = this.usePostgres
+      ? await this.upsertUser(account.phone, account.name)
+      : this.memoryUser(account.phone, account.name);
+    const tokens = await this.issueTokens(user.id);
+    return { user, tokens, role, account };
   }
 
   async requestOtp(phone: string) {
@@ -141,13 +169,13 @@ export class AuthService {
     }
   }
 
-  private memoryUser(phone: string): DevUser {
+  private memoryUser(phone: string, name: string | null = null): DevUser {
     let user = this.memoryUsersByPhone.get(phone);
     if (!user) {
       user = {
         id: `dev_${randomInt(100000, 999999)}`,
         phone,
-        name: null,
+        name,
         createdAt: new Date().toISOString(),
       };
       this.memoryUsersByPhone.set(phone, user);
@@ -155,12 +183,12 @@ export class AuthService {
     return user;
   }
 
-  private async upsertUser(phone: string): Promise<DevUser> {
+  private async upsertUser(phone: string, name: string | null = null): Promise<DevUser> {
     const result = await this.db.pool.query(
-      `INSERT INTO users (phone) VALUES ($1)
-       ON CONFLICT (phone) DO UPDATE SET updated_at = now()
+      `INSERT INTO users (phone, name) VALUES ($1, $2)
+       ON CONFLICT (phone) DO UPDATE SET name = COALESCE(users.name, EXCLUDED.name), updated_at = now()
        RETURNING id, phone, name, created_at`,
-      [phone],
+      [phone, name],
     );
     const row = result.rows[0];
     return { id: row.id, phone: row.phone, name: row.name, createdAt: row.created_at.toISOString() };
