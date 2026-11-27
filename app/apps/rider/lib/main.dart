@@ -493,8 +493,11 @@ class ApiClient {
     return RouteResult.fromJson((json['route'] as Map).cast<String, dynamic>());
   }
 
-  Future<Ride> cancelRide(String id) async {
-    final json = await _post('/rides/$id/cancel', const <String, dynamic>{});
+  Future<Ride> cancelRide(String id, {String? reason, String? note}) async {
+    final json = await _post('/rides/$id/cancel', {
+      if (reason != null) 'reason': reason,
+      if (note != null) 'note': note,
+    });
     return Ride.fromJson((json['ride'] as Map).cast<String, dynamic>());
   }
 
@@ -675,7 +678,7 @@ class Ride {
   Ride({required this.id, required this.state, required this.fare, required this.currency,
     required this.paymentMethod, required this.pickupAddress, required this.dropoffAddress,
     required this.createdAt, this.pickupCode, this.driver,
-    this.pickupLat, this.pickupLng, this.dropoffLat, this.dropoffLng});
+    this.pickupLat, this.pickupLng, this.dropoffLat, this.dropoffLng, this.cancellationLabel});
   final String id;
   final String state;
   final int fare;
@@ -690,6 +693,7 @@ class Ride {
   final DateTime createdAt;
   final String? pickupCode;
   final RideDriver? driver;
+  final String? cancellationLabel;
 
   factory Ride.fromJson(Map<String, dynamic> j) {
     final pickup = (j['pickup'] as Map?)?.cast<String, dynamic>() ?? const {};
@@ -708,6 +712,7 @@ class Ride {
       dropoffLng: (dropoff['lng'] as num?)?.toDouble(),
       createdAt: DateTime.tryParse((j['createdAt'] ?? '') as String)?.toLocal() ?? DateTime.now(),
       pickupCode: j['pickupCode'] as String?,
+      cancellationLabel: (j['cancellation'] as Map?)?['label'] as String?,
       driver: j['driver'] == null ? null : RideDriver.fromJson((j['driver'] as Map).cast<String, dynamic>()),
     );
   }
@@ -1080,10 +1085,9 @@ class BookingPage extends StatefulWidget {
 
 class _BookingPageState extends State<BookingPage> {
   final _pickup = TextEditingController(text: 'Locating your pickup…');
-  final _dropoff = TextEditingController(text: 'Ananas Mall');
+  final _dropoff = TextEditingController();
   PlaceSuggestion? _pickupPlace;
-  PlaceSuggestion? _dropoffPlace = const PlaceSuggestion(
-      id: 'default-dropoff', name: 'Ananas Mall', address: 'Ananas Mall, Thika', lat: -1.0408, lng: 37.0910);
+  PlaceSuggestion? _dropoffPlace;
   List<PlaceSuggestion> _pickupSuggestions = const [];
   List<PlaceSuggestion> _dropoffSuggestions = const [];
   RouteResult? _route;
@@ -1560,6 +1564,7 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
   String? _error;
   String? _paymentError;
   bool _cancelled = false;
+  bool _busyCancel = false;
   bool _paymentBusy = false;
 
   @override
@@ -1639,13 +1644,47 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
   }
 
   Future<void> _cancel() async {
+    const reasons = [
+      'Driver is too far away',
+      'Changed my plans',
+      'Wrong pickup location',
+      'Waiting too long',
+      'Booked by mistake',
+      'Other reason',
+    ];
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Why are you cancelling?'),
+        children: [
+          for (final option in reasons)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(option),
+              child: Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Text(option)),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Text('Keep my ride')),
+          ),
+        ],
+      ),
+    );
+    if (reason == null || reason.isEmpty) return;
+    setState(() { _busyCancel = true; _error = null; });
     try {
-      await widget.api.cancelRide(widget.rideId);
-    } catch (_) {}
-    if (!mounted) return;
-    setState(() => _cancelled = true);
-    _timer?.cancel();
-    Navigator.of(context).pop();
+      await widget.api.cancelRide(widget.rideId, reason: reason);
+      if (!mounted) return;
+      setState(() { _cancelled = true; _busyCancel = false; });
+      _timer?.cancel();
+      Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() { _busyCancel = false; _error = e.message; });
+      _poll();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _busyCancel = false; _error = 'Could not cancel: $e'; });
+    }
   }
 
   Future<void> _refreshPayment() async {
@@ -1721,7 +1760,7 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
     final completed = ride?.state == 'COMPLETED';
     final cancelled = ride?.state == 'CANCELLED';
     final showDriver = driver != null && !completed && !cancelled;
-    final canCancel = ride != null && ['ASSIGNED', 'ARRIVING', 'ARRIVED'].contains(ride.state);
+    final canCancel = ride != null && ['ASSIGNED', 'ARRIVING'].contains(ride.state);
     return Scaffold(
       appBar: const UkoTopBar(),
       body: SafeArea(
@@ -1743,6 +1782,10 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
                     const Icon(Icons.cancel_outlined, size: 48, color: Color(0xFFB3261E)),
                     const SizedBox(height: 12),
                     const Text('Ride cancelled', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    if (ride.cancellationLabel != null) ...[
+                      const SizedBox(height: 6),
+                      Text(ride.cancellationLabel!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF5C7077))),
+                    ],
                     const SizedBox(height: 18),
                     SizedBox(
                       width: double.infinity,
@@ -1764,7 +1807,7 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
                       width: double.infinity,
                       child: OutlinedButton(
                         key: const Key('cancel_ride'),
-                        onPressed: _cancelled ? null : _cancel,
+                        onPressed: _cancelled || _busyCancel ? null : _cancel,
                         style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                         child: const Text('Cancel ride'),
                       ),
@@ -1936,11 +1979,19 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
                         width: double.infinity,
                         child: OutlinedButton(
                           key: const Key('cancel_ride'),
-                          onPressed: _cancelled ? null : _cancel,
+                          onPressed: _cancelled || _busyCancel ? null : _cancel,
                           style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                          child: const Text('Cancel ride'),
+                          child: _busyCancel
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Text('Cancel ride'),
                         ),
                       ),
+                    if (ride.state == 'ARRIVED') ...[
+                      const SizedBox(height: 10),
+                      const Text('Your driver has arrived. Cancellation is handled by dispatch now.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF8A9DA2))),
+                    ],
                   ],
                 ],
               ),
@@ -1978,11 +2029,10 @@ class SchedulePage extends StatefulWidget {
 
 class _SchedulePageState extends State<SchedulePage> {
   final _pickup = TextEditingController(text: 'Thika Town');
-  final _dropoff = TextEditingController(text: 'Ananas Mall');
+  final _dropoff = TextEditingController();
   PlaceSuggestion? _pickupPlace = const PlaceSuggestion(
-      id: 'default-pickup', name: 'Kenyatta Avenue', address: 'Kenyatta Avenue, Nairobi', lat: -1.2841, lng: 36.8233);
-  PlaceSuggestion? _dropoffPlace = const PlaceSuggestion(
-      id: 'default-dropoff', name: 'Ananas Mall', address: 'Ananas Mall, Thika', lat: -1.0408, lng: 37.0910);
+      id: 'default-pickup', name: 'Thika Town', address: 'Thika Town, Kiambu County', lat: -1.0333, lng: 37.0693);
+  PlaceSuggestion? _dropoffPlace;
   List<PlaceSuggestion> _pickupSuggestions = const [];
   List<PlaceSuggestion> _dropoffSuggestions = const [];
   Timer? _searchDebounce;
@@ -3661,7 +3711,7 @@ class _BookingSheetState extends State<BookingSheet> {
               textInputAction: TextInputAction.search,
               onChanged: _onQueryChanged,
               decoration: InputDecoration(
-                hintText: 'Search Thika, Ananas Mall, a landmark or address',
+                hintText: 'Search Thika, a landmark or address',
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF0C8C86)),
                 suffixIcon: _searching
                     ? const Padding(padding: EdgeInsets.all(14), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))

@@ -295,8 +295,10 @@ class ApiClient {
   }
   Future<DriverStatus> rejectOffer(String id) async =>
       DriverStatus.fromJson(await _post('/driver/offers/$id/reject', const {}));
-  Future<DriverTrip> tripAction(String id, String action) async {
-    final json = await _post('/driver/trips/$id/$action', const {});
+  Future<DriverTrip> tripAction(String id, String action, {String? pickupCode}) async {
+    final json = await _post('/driver/trips/$id/$action', {
+      if (pickupCode != null) 'pickupCode': pickupCode,
+    });
     return DriverTrip.fromJson((json['trip'] as Map).cast<String, dynamic>());
   }
 }
@@ -1108,7 +1110,9 @@ class _TripPageState extends State<TripPage> {
   RouteResult? _route;
   int? _etaMin;
   Timer? _etaTimer;
+  Timer? _statusTimer;
   bool _busy = false;
+  bool _cancelNotified = false;
   String? _error;
 
   @override
@@ -1117,12 +1121,37 @@ class _TripPageState extends State<TripPage> {
     _loadRoute();
     _updateEta();
     _etaTimer = Timer.periodic(const Duration(seconds: 15), (_) => _updateEta());
+    _statusTimer = Timer.periodic(const Duration(seconds: 3), (_) => _watchRideCancellation());
   }
 
   @override
   void dispose() {
     _etaTimer?.cancel();
+    _statusTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _watchRideCancellation() async {
+    if (_cancelNotified) return;
+    try {
+      final status = await widget.api.status();
+      if (!mounted) return;
+      final active = status.activeTrip;
+      if (active == null || active.id != _trip.id || active.state == 'CANCELLED') {
+        _cancelNotified = true;
+        _statusTimer?.cancel();
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Ride cancelled'),
+            content: const Text('The rider cancelled this ride. Dispatch can also cancel rides. You will not be charged.'),
+            actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Back to home'))],
+          ),
+        );
+        if (mounted) Navigator.of(context).pop();
+      }
+    } catch (_) {}
   }
 
   Future<void> _updateEta() async {
@@ -1151,10 +1180,56 @@ class _TripPageState extends State<TripPage> {
     } catch (_) {}
   }
 
+  Future<String?> _askPickupCode() async {
+    final controller = TextEditingController();
+    String? validation;
+    final code = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Verify rider pickup code'),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Ask the rider for the 4-digit pickup code shown on their app.'),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('pickup_code_input'),
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              decoration: InputDecoration(labelText: 'Pickup code', counterText: '', errorText: validation),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () {
+                final value = controller.text.trim();
+                if (!RegExp(r'^\d{4}$').hasMatch(value)) {
+                  setDialogState(() => validation = 'Enter the 4-digit code');
+                  return;
+                }
+                Navigator.of(ctx).pop(value);
+              },
+              child: const Text('Verify & start'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    return code;
+  }
+
   Future<void> _advance(String action) async {
+    String? pickupCode;
+    if (action == 'start') {
+      pickupCode = await _askPickupCode();
+      if (pickupCode == null) return;
+    }
     setState(() { _busy = true; _error = null; });
     try {
-      final trip = await widget.api.tripAction(_trip.id, action);
+      final trip = await widget.api.tripAction(_trip.id, action, pickupCode: pickupCode);
       if (!mounted) return;
       setState(() { _trip = trip; _busy = false; });
       if (trip.state == 'COMPLETED') {
@@ -1188,7 +1263,7 @@ class _TripPageState extends State<TripPage> {
   Widget build(BuildContext context) {
     final action = switch (_trip.state) {
       'ACCEPTED' => ('arrived', "I've arrived"),
-      'ARRIVED' => ('start', 'Start trip'),
+      'ARRIVED' => ('start', 'Enter pickup code & start'),
       'IN_PROGRESS' => ('complete', 'Complete trip'),
       _ => (null, 'Completed'),
     };
@@ -1252,9 +1327,10 @@ class _TripPageState extends State<TripPage> {
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDCE7E6))),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('Pickup code for rider', style: TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
+                    const Text('Rider verification', style: TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
                     const SizedBox(height: 4),
-                    Text(_trip.pickupCode, key: const Key('trip_code'), style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 8, color: Color(0xFF0C8C86))),
+                    const Text('Ask the rider for their 4-digit pickup code before starting the trip.',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF41565D))),
                     const Divider(height: 26),
                     _StopRow(icon: Icons.trip_origin, label: _trip.pickupAddress, note: 'Pickup'),
                     const SizedBox(height: 10),

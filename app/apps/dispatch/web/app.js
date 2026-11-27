@@ -84,7 +84,9 @@ function rideRows(rides) {
       <td>${escapeHtml(r.riderPhone || '—')}</td>
       <td class="route">${escapeHtml(r.pickup?.address || '—')} → ${escapeHtml(r.dropoff?.address || '—')}</td>
       <td>KES ${escapeHtml(r.fare)}</td>
-      <td><span class="chip ${escapeHtml(r.state)}">${escapeHtml(r.state)}</span></td>
+      <td><span class="chip ${escapeHtml(r.state)}">${escapeHtml(r.state)}</span>
+        ${r.cancellation?.label ? `<div class="muted small">${escapeHtml(r.cancellation.label)}</div>` : ''}
+      </td>
       <td>${['SEARCHING','ASSIGNED','ARRIVING','ARRIVED','IN_PROGRESS'].includes(r.state)
         ? `<button class="link-button" data-cancel-ride="${escapeHtml(r.id)}">Cancel</button>` : ''}</td>
     </tr>`).join('')}

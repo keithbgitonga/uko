@@ -39,7 +39,7 @@ interface DriverTrip {
   fare: number;
   currency: 'KES';
   pickupCode: string;
-  state: 'ACCEPTED' | 'ARRIVED' | 'IN_PROGRESS' | 'COMPLETED';
+  state: 'ACCEPTED' | 'ARRIVED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   events: { at: string; state: string; note?: string }[];
   createdAt: string;
 }
@@ -107,7 +107,16 @@ export class DriverService implements OnModuleInit {
   }
 
   status(driverId: string) {
-    const activeTrip = this.currentTrip(driverId);
+    let activeTrip = this.currentTrip(driverId);
+    if (activeTrip) {
+      const ride = this.booking.findRideById(activeTrip.rideId);
+      if (ride?.state === 'CANCELLED' && activeTrip.state !== 'CANCELLED') {
+        activeTrip.state = 'CANCELLED';
+        activeTrip.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: 'Rider or dispatch cancelled the ride' });
+        this.persistence.persist('driver_trip', activeTrip.id, activeTrip);
+      }
+      if (activeTrip.state === 'CANCELLED') activeTrip = undefined;
+    }
     return {
       online: this.online.get(driverId) ?? false,
       activeTrip,
@@ -259,7 +268,7 @@ export class DriverService implements OnModuleInit {
     return [...trips].reverse().find((t) => t.state !== 'COMPLETED') ?? null;
   }
 
-  advanceTrip(driverId: string, tripId: string, action: 'arrived' | 'start' | 'complete'): DriverTrip {
+  advanceTrip(driverId: string, tripId: string, action: 'arrived' | 'start' | 'complete', pickupCode?: string): DriverTrip {
     const trip = (this.trips.get(driverId) ?? []).find((t) => t.id === tripId);
     if (!trip) throw new NotFoundException({ code: 'TRIP_NOT_FOUND' });
     if (action === 'arrived' && trip.state === 'ACCEPTED') {
@@ -267,6 +276,12 @@ export class DriverService implements OnModuleInit {
       trip.events.push({ at: new Date().toISOString(), state: 'ARRIVED', note: 'Driver arrived at pickup' });
       this.booking.updateRideForDriver(trip.rideId, 'ARRIVED');
     } else if (action === 'start' && trip.state === 'ARRIVED') {
+      if (!pickupCode) {
+        throw new BadRequestException({ code: 'PICKUP_CODE_REQUIRED', message: 'Enter the rider pickup code before starting the trip.' });
+      }
+      if (pickupCode !== trip.pickupCode) {
+        throw new BadRequestException({ code: 'PICKUP_CODE_INVALID', message: 'That pickup code does not match the rider. Ask the rider to confirm it.' });
+      }
       trip.state = 'IN_PROGRESS';
       trip.events.push({ at: new Date().toISOString(), state: 'IN_PROGRESS', note: 'Trip started' });
       this.booking.updateRideForDriver(trip.rideId, 'IN_PROGRESS');
@@ -280,7 +295,7 @@ export class DriverService implements OnModuleInit {
     this.persistence.persist('driver_trip', trip.id, trip);
     const fare = trip.fare;
     const messages: Record<string, { title: string; body: string }> = {
-      ARRIVED: { title: 'At pickup', body: `Rider has been notified. Pickup code ${trip.pickupCode}.` },
+      ARRIVED: { title: 'At pickup', body: 'Rider has been notified. Ask the rider for their pickup code before starting.' },
       IN_PROGRESS: { title: 'Trip started', body: `${trip.pickup.address} → ${trip.dropoff.address}` },
       COMPLETED: { title: 'Trip completed', body: `Net KES ${Math.round(fare * 0.8)} after commission. Nice work.` },
     };

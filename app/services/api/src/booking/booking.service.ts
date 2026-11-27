@@ -65,6 +65,13 @@ export interface Ride {
   driver?: AssignedDriver;
   driverTripId?: string;
   pickupCode?: string;
+  cancellation?: {
+    code: string;
+    label: string;
+    note?: string;
+    by: 'rider' | 'dispatch' | 'system';
+    at: string;
+  };
   events: RideEvent[];
   createdAt: string;
 }
@@ -232,14 +239,26 @@ export class BookingService implements OnModuleInit {
     return [...this.rides.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  cancelRideByOps(rideId: string): Ride {
+  cancelRideByOps(rideId: string, reason?: string, note?: string): Ride {
     const ride = this.findRide(rideId);
     if (['COMPLETED', 'CANCELLED'].includes(ride.state)) {
       throw new BadRequestException({ code: 'RIDE_NOT_CANCELLABLE' });
     }
+    const label = reason?.trim() || 'Cancelled by dispatch';
     ride.state = 'CANCELLED';
-    ride.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: 'Cancelled by dispatch' });
+    ride.cancellation = {
+      code: 'DISPATCH_CANCELLED',
+      label,
+      ...(note ? { note } : {}),
+      by: 'dispatch',
+      at: new Date().toISOString(),
+    };
+    ride.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: `Cancelled by dispatch: ${label}` });
     this.persistence.persist('booking_ride', ride.id, ride);
+    if (ride.driver?.driverId) {
+      void this.notifications.send(ride.driver.driverId, 'Ride cancelled by dispatch', `${label}.`, { rideId: ride.id, type: 'RIDE_CANCELLED' });
+    }
+    void this.notifications.send(ride.riderId, 'Ride cancelled by dispatch', `${label}.`, { rideId: ride.id, type: 'RIDE_CANCELLED' });
     return ride;
   }
 
@@ -249,15 +268,37 @@ export class BookingService implements OnModuleInit {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  cancelRide(riderId: string, rideId: string): Ride {
+  cancelRide(riderId: string, rideId: string, reason?: string, note?: string): Ride {
     const ride = this.getRide(riderId, rideId);
-    if (!['SEARCHING', 'ASSIGNED', 'ARRIVED'].includes(ride.state)) {
+    if (ride.state === 'ARRIVED' || ride.state === 'IN_PROGRESS') {
+      throw new BadRequestException({
+        code: 'RIDE_ARRIVED_DISPATCH_ONLY',
+        message: 'Your driver has already arrived. Please contact dispatch to cancel this ride.',
+      });
+    }
+    if (!['SEARCHING', 'ASSIGNED', 'ARRIVING'].includes(ride.state)) {
       throw new BadRequestException({ code: 'RIDE_NOT_CANCELLABLE' });
     }
+    const label = reason?.trim() || 'Cancelled by rider';
     ride.state = 'CANCELLED';
-    ride.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: 'Cancelled by rider' });
+    ride.cancellation = {
+      code: 'RIDER_CANCELLED',
+      label,
+      ...(note ? { note } : {}),
+      by: 'rider',
+      at: new Date().toISOString(),
+    };
+    ride.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: `Cancelled by rider: ${label}` });
     this.persistence.persist('booking_ride', ride.id, ride);
+    if (ride.driver?.driverId) {
+      void this.notifications.send(ride.driver.driverId, 'Rider cancelled the ride', `Reason: ${label}.`, { rideId: ride.id, type: 'RIDE_CANCELLED' });
+    }
     return ride;
+  }
+
+  /** Internal lookup used by driver/status syncing. */
+  findRideById(rideId: string): Ride | undefined {
+    return this.rides.get(rideId);
   }
 }
 

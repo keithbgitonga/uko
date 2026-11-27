@@ -57,10 +57,14 @@ export class DispatchController {
   }
 
   @Post('rides/:id/cancel')
-  async cancelRide(@Headers('authorization') authHeader: string | undefined, @Param('id') id: string) {
+  async cancelRide(
+    @Headers('authorization') authHeader: string | undefined,
+    @Param('id') id: string,
+    @Body() body: { reason?: string; note?: string },
+  ) {
     const actor = await this.requireOps(authHeader);
-    const ride = this.booking.cancelRideByOps(id);
-    this.audit.record(actor, 'ride.cancel', 'ride', id, { fare: ride.fare });
+    const ride = this.booking.cancelRideByOps(id, body?.reason, body?.note);
+    this.audit.record(actor, 'ride.cancel', 'ride', id, { fare: ride.fare, reason: ride.cancellation?.label, by: 'dispatch' });
     return { ride };
   }
 

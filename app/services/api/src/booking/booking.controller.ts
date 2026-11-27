@@ -48,9 +48,13 @@ export class BookingController {
   }
 
   @Post('rides/:id/cancel')
-  async cancelRide(@Headers('authorization') authHeader: string | undefined, @Param('id') id: string) {
+  async cancelRide(
+    @Headers('authorization') authHeader: string | undefined,
+    @Param('id') id: string,
+    @Body() body: { reason?: string; note?: string },
+  ) {
     const user = (await this.requireUser(authHeader));
-    return { ride: this.booking.cancelRide(user.id, id) };
+    return { ride: this.booking.cancelRide(user.id, id, body?.reason, body?.note) };
   }
 
   private async requireUser(authHeader?: string): Promise<DevUser> {
