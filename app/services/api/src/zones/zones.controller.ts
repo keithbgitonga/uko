@@ -2,10 +2,10 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 /** Walking-skeleton zone config. Sprint 1 replaces this with Postgres reads. */
-const NAIROBI_ZONE = {
-  id: 'zone_nairobi_pilot',
-  name: 'Nairobi pilot zone',
-  city: 'Nairobi',
+const JUJA_ZONE = {
+  id: 'zone_juja_pilot',
+  name: 'Juja pilot zone',
+  city: 'Juja',
   currency: 'KES',
   category: 'boda',
   pricing: {
@@ -24,11 +24,11 @@ const NAIROBI_ZONE = {
 export class ZonesController {
   @Get()
   list() {
-    return { zones: [NAIROBI_ZONE] };
+    return { zones: [JUJA_ZONE] };
   }
 
   @Get('active')
   active() {
-    return NAIROBI_ZONE;
+    return JUJA_ZONE;
   }
 }

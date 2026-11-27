@@ -66,7 +66,7 @@ function renderMetrics(metrics) {
     { label: 'Open incidents', value: metrics.openIncidents, hint: 'SOS needing attention' },
     { label: 'Drivers online', value: metrics.driversOnline, hint: 'available now' },
     { label: 'Scheduled upcoming', value: metrics.scheduledUpcoming, hint: 'single + series occurrences' },
-    { label: 'Pilot zone', value: 'Nairobi', hint: 'Boda only' },
+    { label: 'Pilot zone', value: 'Juja', hint: 'Boda only' },
   ];
   $('metrics').innerHTML = cards.map((c) => `
     <div class="metric">

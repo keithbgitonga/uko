@@ -11,6 +11,12 @@ export interface PlaceResult {
 
 // Small offline seed so the bench and demos still work without Nominatim.
 const SEED: PlaceResult[] = [
+  { id: 'seed-juja-town', name: 'Juja Town', address: 'Juja Town, Kiambu County', lat: -1.1017, lng: 37.0144 },
+  { id: 'seed-jkuat', name: 'JKUAT', address: 'Jomo Kenyatta University of Agriculture and Technology, Juja', lat: -1.0973, lng: 37.0118 },
+  { id: 'seed-juja-mall', name: 'Juja City Mall', address: 'Juja City Mall, Juja', lat: -1.1058, lng: 37.0140 },
+  { id: 'seed-gachororo', name: 'Gachororo', address: 'Gachororo, Juja', lat: -1.1122, lng: 37.0207 },
+  { id: 'seed-kenyatta-road', name: 'Kenyatta Road', address: 'Kenyatta Road, Juja', lat: -1.1010, lng: 37.0080 },
+  { id: 'seed-ruiru', name: 'Ruiru', address: 'Ruiru, Kiambu County', lat: -1.1460, lng: 36.9600 },
   { id: 'seed-kenyatta', name: 'Kenyatta Avenue', address: 'Kenyatta Avenue, Nairobi', lat: -1.2841, lng: 36.8233 },
   { id: 'seed-westlands', name: 'Westlands', address: 'Westlands, Nairobi', lat: -1.2657, lng: 36.8075 },
   { id: 'seed-cbd', name: 'Nairobi CBD', address: 'Central Business District, Nairobi', lat: -1.2864, lng: 36.8172 },
@@ -38,34 +44,82 @@ export class PlacesService {
   constructor(private readonly config: ConfigService) {}
 
   async search(query: string): Promise<PlaceResult[]> {
-    const q = query.trim().toLowerCase();
+    const raw = query.trim();
+    const q = raw.toLowerCase();
     if (q.length < 2) return [];
     const cached = this.cache.get(q);
     if (cached && cached.at > Date.now() - 3_600_000) return cached.places;
 
-    const fallback = SEED.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q),
-    ).slice(0, 6);
+    const scoredSeed = SEED.map((place, index) => ({
+      place,
+      score: scorePlace(place, q) + Math.max(0, 20 - index),
+    }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((entry) => entry.place);
 
     let remote: PlaceResult[] = [];
     try {
-      remote = await this.nominatim(query.trim());
+      remote = await this.nominatim(raw);
     } catch {
       remote = [];
     }
+
     const seen = new Set<string>();
     const places: PlaceResult[] = [];
-    for (const place of [...remote, ...fallback]) {
-      const key = `${place.name}|${place.lat.toFixed(4)}|${place.lng.toFixed(4)}`;
+    for (const place of [...remote, ...scoredSeed]) {
+      const key = `${place.name.toLowerCase()}|${place.lat.toFixed(4)}|${place.lng.toFixed(4)}`;
       if (seen.has(key)) continue;
       seen.add(key);
       places.push(place);
-      if (places.length >= 6) break;
     }
-    if (places.length === 0) places.push(...fallback);
+    // Keep Juja-area results ahead of distant matches unless the name/address match is much stronger.
+    places.sort((a, b) =>
+      (scorePlace(b, q) + proximityBonus(b)) - (scorePlace(a, q) + proximityBonus(a)),
+    );
+    places.splice(8);
     this.cache.set(q, { at: Date.now(), places });
     if (this.cache.size > 500) this.cache.delete(this.cache.keys().next().value as string);
     return places;
+  }
+
+  /** Reverse geocode the rider's current position for a human pickup label. */
+  async reverse(lat: number, lng: number): Promise<PlaceResult> {
+    try {
+      const base = (this.config.get<string>('places.nominatimUrl') ?? '').replace('/search', '/reverse');
+      const url = new URL(base);
+      url.searchParams.set('format', 'jsonv2');
+      url.searchParams.set('lat', String(lat));
+      url.searchParams.set('lon', String(lng));
+      url.searchParams.set('zoom', '18');
+      url.searchParams.set('addressdetails', '1');
+      url.searchParams.set('accept-language', 'en');
+      const response = await fetch(url, {
+        headers: { 'user-agent': this.config.get<string>('places.userAgent')!, accept: 'application/json' },
+        signal: AbortSignal.timeout(4_000),
+      });
+      if (!response.ok) throw new Error(`nominatim_reverse_http_${response.status}`);
+      const row: any = await response.json();
+      const display = String(row.display_name ?? '').trim();
+      if (display) {
+        return {
+          id: `current-${lat.toFixed(5)}-${lng.toFixed(5)}`,
+          name: display.split(',')[0]?.trim() || 'Current location',
+          address: display,
+          lat,
+          lng,
+        };
+      }
+    } catch {
+      // fall through to a coordinate label
+    }
+    return {
+      id: `current-${lat.toFixed(5)}-${lng.toFixed(5)}`,
+      name: 'Current location',
+      address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+      lat,
+      lng,
+    };
   }
 
   private async nominatim(query: string): Promise<PlaceResult[]> {
@@ -75,9 +129,12 @@ export class PlacesService {
     url.searchParams.set('format', 'jsonv2');
     url.searchParams.set('q', query);
     url.searchParams.set('countrycodes', 'ke');
-    url.searchParams.set('limit', '6');
+    url.searchParams.set('limit', '8');
     url.searchParams.set('addressdetails', '1');
-    url.searchParams.set('viewbox', '36.60,-1.10,37.10,-1.55');
+    url.searchParams.set('dedupe', '1');
+    url.searchParams.set('accept-language', 'en');
+    url.searchParams.set('bounded', '0');
+    url.searchParams.set('viewbox', '36.90,-1.00,37.20,-1.30');
     const response = await fetch(url, {
       headers: { 'user-agent': userAgent, accept: 'application/json' },
       signal: AbortSignal.timeout(4_000),
@@ -98,4 +155,31 @@ export class PlacesService {
         };
       });
   }
+}
+
+
+function scorePlace(place: PlaceResult, q: string): number {
+  const name = place.name.toLowerCase();
+  const address = place.address.toLowerCase();
+  const words = q.split(/\s+/).filter(Boolean);
+  if (name === q) return 100;
+  if (name.startsWith(q)) return 90;
+  if (words.every((word) => name.split(/\s+/).some((part) => part.startsWith(word)))) return 80;
+  if (name.includes(q)) return 70;
+  if (address.includes(q)) return 50;
+  if (words.every((word) => address.includes(word))) return 30;
+  return 0;
+}
+
+
+const JUJA_CENTER = { lat: -1.1017, lng: 37.0144 };
+
+function proximityBonus(place: PlaceResult): number {
+  const latM = (place.lat - JUJA_CENTER.lat) * 111_000;
+  const lngM = (place.lng - JUJA_CENTER.lng) * 111_000 * Math.cos(JUJA_CENTER.lat * Math.PI / 180);
+  const km = Math.sqrt(latM * latM + lngM * lngM) / 1000;
+  if (km <= 8) return 45;
+  if (km <= 20) return 25;
+  if (km <= 40) return 10;
+  return 0;
 }

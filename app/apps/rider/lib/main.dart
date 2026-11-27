@@ -87,22 +87,68 @@ class UkoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seed),
-        scaffoldBackgroundColor: const Color(0xFFF6FAF9),
+        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light, surface: Colors.white),
+        scaffoldBackgroundColor: const Color(0xFFF4F8F7),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF08222B),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          foregroundColor: Color(0xFF08222B),
+          elevation: 0,
+          scrolledUnderElevation: 0,
           centerTitle: false,
+          toolbarHeight: 52,
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFDCE7E6))),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0C8C86), width: 1.6)),
+          prefixIconColor: const Color(0xFF0C8C86),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(54),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+        ),
+        dividerTheme: const DividerThemeData(color: Color(0xFFE4ECEA), thickness: 1, space: 24),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF08222B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
       home: const SignInPage(),
     );
   }
+}
+
+class UkoTopBar extends StatelessWidget implements PreferredSizeWidget {
+  const UkoTopBar({super.key, this.actions});
+  final List<Widget>? actions;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(52);
+
+  @override
+  Widget build(BuildContext context) => AppBar(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        foregroundColor: const Color(0xFF08222B),
+        toolbarHeight: 52,
+        actions: actions,
+      );
 }
 
 const MethodChannel _calendarChannel = MethodChannel('ke.uko.rider/calendar');
@@ -241,10 +287,10 @@ class SavedPlace {
 class SavedPlacesStore {
   static const _key = 'uko_saved_places_v1';
   static const defaults = <SavedPlace>[
-    SavedPlace(label: 'Home', address: 'Kileleshwa', lat: -1.2783, lng: 36.7826),
-    SavedPlace(label: 'Work', address: 'Westlands', lat: -1.2657, lng: 36.8075),
+    SavedPlace(label: 'Home', address: 'Gachororo, Juja', lat: -1.1122, lng: 37.0207),
+    SavedPlace(label: 'Work', address: 'JKUAT, Juja', lat: -1.0973, lng: 37.0118),
     SavedPlace(label: 'Airport', address: 'JKIA Terminal 1A', lat: -1.3169, lng: 36.9289),
-    SavedPlace(label: 'Mall', address: 'Yaya Centre', lat: -1.2929, lng: 36.7854),
+    SavedPlace(label: 'Mall', address: 'Juja City Mall', lat: -1.1058, lng: 37.0140),
   ];
 
   static Future<List<SavedPlace>> load() async {
@@ -396,6 +442,13 @@ class ApiClient {
     return ((json['places'] as List?) ?? [])
         .map((e) => PlaceSuggestion.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<PlaceSuggestion?> reverseGeocode(double lat, double lng) async {
+    final json = await _get('/places/reverse?lat=$lat&lng=$lng');
+    final place = json['place'];
+    if (place is! Map) return null;
+    return PlaceSuggestion.fromJson(place.cast<String, dynamic>());
   }
 
   Future<Quote> quote({
@@ -885,9 +938,6 @@ class _SignInPageState extends State<SignInPage> {
       return HomeScreen(api: _api, session: _session!, onSignOut: _signOut);
     }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Uko?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22)),
-      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -1018,28 +1068,28 @@ class _SignInPageState extends State<SignInPage> {
 }
 
 class BookingPage extends StatefulWidget {
-  const BookingPage({super.key, required this.api, required this.session, this.initialDropoff});
+  const BookingPage({super.key, required this.api, required this.session, this.initialDropoff, this.initialDropoffPlace});
   final ApiClient api;
   final AuthSession session;
   final String? initialDropoff;
+  final PlaceSuggestion? initialDropoffPlace;
 
   @override
   State<BookingPage> createState() => _BookingPageState();
 }
 
 class _BookingPageState extends State<BookingPage> {
-  final _pickup = TextEditingController(text: 'Kenyatta Avenue');
-  final _dropoff = TextEditingController(text: 'Westlands');
-  PlaceSuggestion? _pickupPlace = const PlaceSuggestion(
-      id: 'default-pickup', name: 'Kenyatta Avenue', address: 'Kenyatta Avenue, Nairobi', lat: -1.2841, lng: 36.8233);
+  final _pickup = TextEditingController(text: 'Locating your pickup…');
+  final _dropoff = TextEditingController(text: 'Juja City Mall');
+  PlaceSuggestion? _pickupPlace;
   PlaceSuggestion? _dropoffPlace = const PlaceSuggestion(
-      id: 'default-dropoff', name: 'Westlands', address: 'Westlands, Nairobi', lat: -1.2657, lng: 36.8075);
+      id: 'default-dropoff', name: 'Juja City Mall', address: 'Juja City Mall, Juja', lat: -1.1058, lng: 37.0140);
   List<PlaceSuggestion> _pickupSuggestions = const [];
   List<PlaceSuggestion> _dropoffSuggestions = const [];
   RouteResult? _route;
   Timer? _searchDebounce;
   final _scroll = ScrollController();
-  bool _locating = false;
+  bool _locating = true;
   Quote? _quote;
   bool _busy = false;
   String? _error;
@@ -1048,9 +1098,62 @@ class _BookingPageState extends State<BookingPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialDropoff != null) {
+    if (widget.initialDropoffPlace != null) {
+      _dropoffPlace = widget.initialDropoffPlace;
+      _dropoff.text = widget.initialDropoffPlace!.name;
+    } else if (widget.initialDropoff != null) {
       _dropoff.text = widget.initialDropoff!;
       _dropoffPlace = null;
+    }
+    _locatePickup();
+  }
+
+  Future<void> _locatePickup() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) throw Exception('Location services are off');
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        throw Exception('Location permission denied');
+      }
+      final position = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      final rough = PlaceSuggestion(
+        id: 'gps-pickup',
+        name: 'Current location',
+        address: 'Finding your address…',
+        lat: position.latitude,
+        lng: position.longitude,
+      );
+      setState(() {
+        _pickupPlace = rough;
+        _pickup.text = 'Current location';
+        _locating = false;
+      });
+      try {
+        final resolved = await widget.api.reverseGeocode(position.latitude, position.longitude);
+        if (resolved != null && mounted) {
+          setState(() {
+            _pickupPlace = resolved;
+            _pickup.text = resolved.name;
+          });
+        }
+      } catch (_) {}
+      _refreshRoute();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _locating = false;
+        _pickupPlace = const PlaceSuggestion(
+          id: 'fallback-pickup',
+          name: 'Juja Town',
+          address: 'Juja Town, Kiambu County',
+          lat: -1.1017,
+          lng: 37.0144,
+        );
+        _pickup.text = 'Juja Town';
+      });
+      _refreshRoute();
     }
   }
 
@@ -1126,36 +1229,7 @@ class _BookingPageState extends State<BookingPage> {
 
   Future<void> _useCurrentLocation() async {
     setState(() { _locating = true; _error = null; });
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        throw Exception('Location services are off');
-      }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-        throw Exception('Location permission denied');
-      }
-      final position = await Geolocator.getCurrentPosition();
-      if (!mounted) return;
-      setState(() {
-        _pickup.text = 'Current location';
-        _pickupPlace = PlaceSuggestion(
-          id: 'current-location',
-          name: 'Current location',
-          address: 'Current location',
-          lat: position.latitude,
-          lng: position.longitude,
-        );
-        _pickupSuggestions = const [];
-        _locating = false;
-      });
-      _refreshRoute();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _locating = false; _error = 'Could not get location: $e'; });
-    }
+    await _locatePickup();
   }
 
   @override
@@ -1238,7 +1312,7 @@ class _BookingPageState extends State<BookingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Book a Boda')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -1649,7 +1723,7 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
     final showDriver = driver != null && !completed && !cancelled;
     final canCancel = ride != null && ['ASSIGNED', 'ARRIVING', 'ARRIVED'].contains(ride.state);
     return Scaffold(
-      appBar: AppBar(title: const Text('Your Boda')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -1903,12 +1977,12 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  final _pickup = TextEditingController(text: 'Kenyatta Avenue');
-  final _dropoff = TextEditingController(text: 'Westlands');
+  final _pickup = TextEditingController(text: 'Juja Town');
+  final _dropoff = TextEditingController(text: 'Juja City Mall');
   PlaceSuggestion? _pickupPlace = const PlaceSuggestion(
       id: 'default-pickup', name: 'Kenyatta Avenue', address: 'Kenyatta Avenue, Nairobi', lat: -1.2841, lng: 36.8233);
   PlaceSuggestion? _dropoffPlace = const PlaceSuggestion(
-      id: 'default-dropoff', name: 'Westlands', address: 'Westlands, Nairobi', lat: -1.2657, lng: 36.8075);
+      id: 'default-dropoff', name: 'Juja City Mall', address: 'Juja City Mall, Juja', lat: -1.1058, lng: 37.0140);
   List<PlaceSuggestion> _pickupSuggestions = const [];
   List<PlaceSuggestion> _dropoffSuggestions = const [];
   Timer? _searchDebounce;
@@ -2097,7 +2171,7 @@ class _SchedulePageState extends State<SchedulePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Schedule a ride')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -2302,10 +2376,7 @@ class _ScheduledRidesPageState extends State<ScheduledRidesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scheduled rides'),
-        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh')],
-      ),
+      appBar: UkoTopBar(actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh')]),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -2433,7 +2504,7 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendar suggestions')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -2707,7 +2778,7 @@ class _SafetyPageState extends State<SafetyPage> {
   Widget build(BuildContext context) {
     final incident = _incident;
     return Scaffold(
-      appBar: AppBar(title: const Text('Safety & SOS')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -2868,7 +2939,7 @@ class HomeScreen extends StatelessWidget {
                         child: const Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.location_on, size: 14, color: Color(0xFF0C8C86)),
                           SizedBox(width: 4),
-                          Text('Nairobi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2A4048))),
+                          Text('Juja', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2A4048))),
                         ]),
                       ),
                       const SizedBox(width: 8),
@@ -2926,14 +2997,14 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: 14),
                           InkWell(
                             onTap: () async {
-                              final dropoff = await showModalBottomSheet<String>(
+                              final dropoff = await showModalBottomSheet<PlaceSuggestion>(
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
                                 builder: (_) => BookingSheet(api: api),
                               );
                               if (dropoff != null && context.mounted) {
-                                _open(context, BookingPage(api: api, session: session, initialDropoff: dropoff));
+                                _open(context, BookingPage(api: api, session: session, initialDropoffPlace: dropoff));
                               }
                             },
                             borderRadius: BorderRadius.circular(16),
@@ -3172,7 +3243,7 @@ class _RideMapPainter extends CustomPainter {
     if (hero) {
       final textPainter = TextPainter(
         text: const TextSpan(
-          text: 'Nairobi · Boda pilot',
+          text: 'Juja · Boda pilot',
           style: TextStyle(fontSize: 10, color: Color(0xFF7A918A), fontWeight: FontWeight.w600, letterSpacing: 0.4),
         ),
         textDirection: TextDirection.ltr,
@@ -3327,10 +3398,7 @@ class _TripsPageState extends State<TripsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trips & receipts'),
-        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh')],
-      ),
+      appBar: UkoTopBar(actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh')]),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -3416,7 +3484,10 @@ class _BookingSheetState extends State<BookingSheet> {
   final _destination = TextEditingController();
   List<String> _recent = [];
   List<SavedPlace> _saved = List.of(SavedPlacesStore.defaults);
+  List<PlaceSuggestion> _suggestions = const [];
   bool _loadingRecent = true;
+  bool _searching = false;
+  Timer? _searchDebounce;
 
   IconData _placeIcon(String label) {
     switch (label.toLowerCase()) {
@@ -3484,8 +3555,63 @@ class _BookingSheetState extends State<BookingSheet> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _destination.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _searchDebounce?.cancel();
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() { _suggestions = const []; _searching = false; });
+      return;
+    }
+    setState(() => _searching = true);
+    _searchDebounce = Timer(const Duration(milliseconds: 280), () async {
+      try {
+        final places = await widget.api.searchPlaces(query);
+        if (!mounted) return;
+        setState(() { _suggestions = places; _searching = false; });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() { _suggestions = const []; _searching = false; });
+      }
+    });
+  }
+
+  void _choosePlace(PlaceSuggestion place) {
+    Navigator.of(context).pop<PlaceSuggestion>(place);
+  }
+
+  Future<void> _chooseAddress(String address) async {
+    setState(() => _searching = true);
+    try {
+      final places = await widget.api.searchPlaces(address);
+      if (!mounted) return;
+      setState(() => _searching = false);
+      if (places.isNotEmpty) {
+        _choosePlace(places.first);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not find "$address". Try searching for the area or landmark.')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _searching = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Search failed: $e')));
+    }
+  }
+
+  Future<void> _submitQuery() async {
+    final query = _destination.text.trim();
+    if (query.isEmpty) return;
+    if (_suggestions.isNotEmpty) {
+      _choosePlace(_suggestions.first);
+    } else {
+      await _chooseAddress(query);
+    }
   }
 
   Future<void> _loadRecent() async {
@@ -3506,10 +3632,6 @@ class _BookingSheetState extends State<BookingSheet> {
       if (!mounted) return;
       setState(() => _loadingRecent = false);
     }
-  }
-
-  void _choose(String address) {
-    Navigator.of(context).pop(address);
   }
 
   @override
@@ -3536,68 +3658,99 @@ class _BookingSheetState extends State<BookingSheet> {
               key: const Key('sheet_destination'),
               controller: _destination,
               autofocus: false,
-              textInputAction: TextInputAction.done,
+              textInputAction: TextInputAction.search,
+              onChanged: _onQueryChanged,
               decoration: InputDecoration(
-                hintText: 'Enter a destination',
+                hintText: 'Search Juja, JKUAT, a mall or an address',
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF0C8C86)),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.arrow_forward, color: Color(0xFF0C8C86)),
-                  onPressed: () {
-                    final value = _destination.text.trim();
-                    if (value.isNotEmpty) _choose(value);
-                  },
-                ),
+                suffixIcon: _searching
+                    ? const Padding(padding: EdgeInsets.all(14), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
+                    : IconButton(
+                        icon: const Icon(Icons.arrow_forward, color: Color(0xFF0C8C86)),
+                        onPressed: _submitQuery,
+                      ),
               ),
-              onSubmitted: (value) {
-                if (value.trim().isNotEmpty) _choose(value.trim());
-              },
+              onSubmitted: (_) => _submitQuery(),
             ),
-            const SizedBox(height: 18),
-            const Text('Saved places', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF5C7077))),
-            const SizedBox(height: 6),
-            for (final place in _saved)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 38, height: 38,
-                  decoration: BoxDecoration(color: const Color(0xFFE9F7F4), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(_placeIcon(place.label), size: 20, color: const Color(0xFF0C8C86)),
+            const SizedBox(height: 14),
+            if (_destination.text.trim().length >= 2) ...[
+              if (_suggestions.isEmpty && !_searching)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 22),
+                  child: Column(children: [
+                    const Icon(Icons.search_off, size: 36, color: Color(0xFF8A9DA2)),
+                    const SizedBox(height: 8),
+                    Text('No places found. Try a landmark like "JKUAT" or "Juja City Mall".',
+                        textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  ]),
                 ),
-                title: Text(place.label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(place.address, style: const TextStyle(fontSize: 12)),
-                trailing: PopupMenuButton<String>(
-                  key: Key('saved_menu_${place.label}'),
-                  icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF8A9DA2)),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _editSaved(place);
-                    } else if (value == 'delete') {
-                      _deleteSaved(place);
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'edit', child: Text('Rename')),
-                    PopupMenuItem(value: 'delete', child: Text('Remove')),
-                  ],
+              for (final place in _suggestions)
+                ListTile(
+                  key: Key('place_${place.id}'),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  leading: Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(color: const Color(0xFFE9F7F4), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.place_outlined, size: 20, color: Color(0xFF0C8C86)),
+                  ),
+                  title: Text(place.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(place.address, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.north_east, size: 16, color: Color(0xFF8A9DA2)),
+                  onTap: () => _choosePlace(place),
                 ),
-                onTap: () => _choose(place.address),
-              ),
-            const SizedBox(height: 8),
-            const Text('Recent', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF5C7077))),
-            const SizedBox(height: 6),
-            if (_loadingRecent)
-              const Padding(padding: EdgeInsets.all(8), child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)))
-            else if (_recent.isEmpty)
-              Text('No recent destinations yet', style: TextStyle(fontSize: 12, color: Colors.grey.shade600))
-            else
-              for (final address in _recent)
+            ] else ...[
+              const Text('Saved places', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF5C7077))),
+              const SizedBox(height: 6),
+              for (final place in _saved)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.history, color: Color(0xFF8A9DA2)),
-                  title: Text(address),
-                  trailing: const Icon(Icons.chevron_right, size: 18, color: Color(0xFF8A9DA2)),
-                  onTap: () => _choose(address),
+                  leading: Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(color: const Color(0xFFE9F7F4), borderRadius: BorderRadius.circular(10)),
+                    child: Icon(_placeIcon(place.label), size: 20, color: const Color(0xFF0C8C86)),
+                  ),
+                  title: Text(place.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(place.address, style: const TextStyle(fontSize: 12)),
+                  trailing: PopupMenuButton<String>(
+                    key: Key('saved_menu_${place.label}'),
+                    icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF8A9DA2)),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _editSaved(place);
+                      } else if (value == 'delete') {
+                        _deleteSaved(place);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'edit', child: Text('Rename')),
+                      PopupMenuItem(value: 'delete', child: Text('Remove')),
+                    ],
+                  ),
+                  onTap: () => _choosePlace(PlaceSuggestion(
+                    id: 'saved-${place.label}',
+                    name: place.label,
+                    address: place.address,
+                    lat: place.lat,
+                    lng: place.lng,
+                  )),
                 ),
+              const SizedBox(height: 8),
+              const Text('Recent', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF5C7077))),
+              const SizedBox(height: 6),
+              if (_loadingRecent)
+                const Padding(padding: EdgeInsets.all(8), child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)))
+              else if (_recent.isEmpty)
+                Text('No recent destinations yet', style: TextStyle(fontSize: 12, color: Colors.grey.shade600))
+              else
+                for (final address in _recent)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.history, color: Color(0xFF8A9DA2)),
+                    title: Text(address),
+                    trailing: const Icon(Icons.chevron_right, size: 18, color: Color(0xFF8A9DA2)),
+                    onTap: () => _chooseAddress(address),
+                  ),
+            ],
           ],
         ),
       ),
@@ -3648,7 +3801,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: const UkoTopBar(),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
@@ -3700,8 +3853,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
 
 const bool kRealMapsEnabled = bool.fromEnvironment('UKO_REAL_MAPS', defaultValue: true);
-const _ukoPickup = LatLng(-1.2921, 36.8219);
-const _ukoDropoff = LatLng(-1.2648, 36.8031);
+const _ukoPickup = LatLng(-1.1017, 37.0144);
+const _ukoDropoff = LatLng(-1.1058, 37.0140);
 
 /// Real Google map when built with `--dart-define=UKO_REAL_MAPS=true` and a
 /// Maps API key configured; otherwise falls back to the offline stylised map.

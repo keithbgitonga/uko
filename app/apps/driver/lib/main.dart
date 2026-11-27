@@ -79,22 +79,63 @@ class UkoDriverApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C8C86)),
-        scaffoldBackgroundColor: const Color(0xFFF6FAF9),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C8C86), brightness: Brightness.light, surface: Colors.white),
+        scaffoldBackgroundColor: const Color(0xFFF4F8F7),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF08222B),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          foregroundColor: Color(0xFF08222B),
+          elevation: 0,
+          scrolledUnderElevation: 0,
           centerTitle: false,
+          toolbarHeight: 52,
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFDCE7E6))),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0C8C86), width: 1.6)),
+          prefixIconColor: const Color(0xFF0C8C86),
         ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(54),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+        ),
+        dividerTheme: const DividerThemeData(color: Color(0xFFE4ECEA), thickness: 1, space: 24),
       ),
       home: const SignInPage(),
     );
   }
+}
+
+class UkoTopBar extends StatelessWidget implements PreferredSizeWidget {
+  const UkoTopBar({super.key, this.actions});
+  final List<Widget>? actions;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(52);
+
+  @override
+  Widget build(BuildContext context) => AppBar(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        foregroundColor: const Color(0xFF08222B),
+        toolbarHeight: 52,
+        actions: actions,
+      );
 }
 
 class ApiException implements Exception {
@@ -506,7 +547,7 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Uko? Driver')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -1152,7 +1193,7 @@ class _TripPageState extends State<TripPage> {
       _ => (null, 'Completed'),
     };
     return Scaffold(
-      appBar: AppBar(title: const Text('Current trip')),
+      appBar: const UkoTopBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -1371,7 +1412,7 @@ class _DriverMapPainter extends CustomPainter {
     _pin(canvas, Offset(size.width * 0.86, size.height * 0.2), const Color(0xFFB3261E));
     if (hero) {
       final text = TextPainter(
-        text: const TextSpan(text: 'Nairobi · driver', style: TextStyle(fontSize: 10, color: Color(0xFF7A918A), fontWeight: FontWeight.w600)),
+        text: const TextSpan(text: 'Juja · driver', style: TextStyle(fontSize: 10, color: Color(0xFF7A918A), fontWeight: FontWeight.w600)),
         textDirection: TextDirection.ltr,
       )..layout();
       text.paint(canvas, Offset(20, size.height - 24));
@@ -1441,7 +1482,7 @@ class _DriverNotificationsPageState extends State<DriverNotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: const UkoTopBar(),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
@@ -1562,7 +1603,7 @@ class _DriverDocumentsPageState extends State<DriverDocumentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Documents'), actions: [
+      appBar: UkoTopBar(actions: [
         IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh'),
       ]),
       body: SafeArea(
@@ -1674,8 +1715,8 @@ Future<void> registerPushForApi(ApiClient api) async {
 
 
 const bool kRealMapsEnabled = bool.fromEnvironment('UKO_REAL_MAPS', defaultValue: true);
-const _ukoPickup = LatLng(-1.2921, 36.8219);
-const _ukoDropoff = LatLng(-1.2648, 36.8031);
+const _ukoPickup = LatLng(-1.1017, 37.0144);
+const _ukoDropoff = LatLng(-1.1058, 37.0140);
 
 /// Real Google map when built with `--dart-define=UKO_REAL_MAPS=true` and a
 /// Maps API key configured; otherwise falls back to the offline stylised map.
