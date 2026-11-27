@@ -341,6 +341,60 @@ class AuthSession {
 
   String get phone => (user['phone'] ?? '') as String;
   String get userId => (user['id'] ?? '') as String;
+
+  Map<String, dynamic> toJson() => {
+        'accessToken': accessToken,
+        'refreshToken': refreshToken,
+        'user': user,
+      };
+
+  factory AuthSession.fromJson(Map<String, dynamic> json) => AuthSession(
+        accessToken: (json['accessToken'] ?? '') as String,
+        refreshToken: (json['refreshToken'] ?? '') as String,
+        user: (json['user'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{},
+      );
+}
+
+class SessionStore {
+  static const _sessionKey = 'uko_rider_session_v1';
+  static const _activeRideKey = 'uko_rider_active_ride_v1';
+
+  static Future<AuthSession?> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_sessionKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return AuthSession.fromJson((jsonDecode(raw) as Map).cast<String, dynamic>());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> save(AuthSession session) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sessionKey, jsonEncode(session.toJson()));
+  }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_sessionKey);
+    await prefs.remove(_activeRideKey);
+  }
+
+  static Future<String?> activeRideId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString(_activeRideKey);
+    return id == null || id.isEmpty ? null : id;
+  }
+
+  static Future<void> saveActiveRide(String? rideId) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (rideId == null || rideId.isEmpty) {
+      await prefs.remove(_activeRideKey);
+    } else {
+      await prefs.setString(_activeRideKey, rideId);
+    }
+  }
 }
 
 class ApiClient {
@@ -348,15 +402,41 @@ class ApiClient {
   final String baseUrl;
   final http.Client _client;
   String? accessToken;
+  String? refreshToken;
 
   Map<String, String> get _headers => {
     'content-type': 'application/json',
     if (accessToken != null) 'authorization': 'Bearer $accessToken',
   };
 
+  Future<bool> refreshSession() async {
+    final token = refreshToken;
+    if (token == null || token.isEmpty) return false;
+    try {
+      final response = await _client
+          .post(
+            Uri.parse('$baseUrl/auth/token/refresh'),
+            headers: {'content-type': 'application/json'},
+            body: jsonEncode({'refreshToken': token}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode >= 400) return false;
+      final json = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      final tokens = (json['tokens'] ?? <String, dynamic>{}) as Map<String, dynamic>;
+      final access = (tokens['accessToken'] ?? '') as String;
+      final refreshed = (tokens['refreshToken'] ?? '') as String;
+      if (access.isEmpty) return false;
+      accessToken = access;
+      if (refreshed.isNotEmpty) refreshToken = refreshed;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
     final uri = Uri.parse('$baseUrl$path');
-    final response = await _client
+    Future<http.Response> send() => _client
         .post(
           uri,
           headers: {
@@ -366,6 +446,10 @@ class ApiClient {
           body: jsonEncode(body),
         )
         .timeout(const Duration(seconds: 15));
+    var response = await send();
+    if (response.statusCode == 401 && !path.startsWith('/auth/') && await refreshSession()) {
+      response = await send();
+    }
     return _decode(response);
   }
 
@@ -385,10 +469,16 @@ class ApiClient {
 
   Future<Map<String, dynamic>> _get(String path, [String? token]) async {
     final uri = Uri.parse('$baseUrl$path');
-    final bearer = token ?? accessToken;
-    final response = await _client.get(uri, headers: {
-      if (bearer != null) 'authorization': 'Bearer $bearer',
-    }).timeout(const Duration(seconds: 15));
+    Future<http.Response> send() {
+      final bearer = token ?? accessToken;
+      return _client.get(uri, headers: {
+        if (bearer != null) 'authorization': 'Bearer $bearer',
+      }).timeout(const Duration(seconds: 15));
+    }
+    var response = await send();
+    if (response.statusCode == 401 && !path.startsWith('/auth/') && await refreshSession()) {
+      response = await send();
+    }
     return _decode(response);
   }
 
@@ -424,11 +514,14 @@ class ApiClient {
   Future<AuthSession> verifyOtp(String phone, String code) async {
     final json = await _post('/auth/otp/verify', {'phone': phone, 'code': code});
     final tokens = (json['tokens'] ?? <String, dynamic>{}) as Map<String, dynamic>;
-    return AuthSession(
+    final session = AuthSession(
       accessToken: (tokens['accessToken'] ?? '') as String,
       refreshToken: (tokens['refreshToken'] ?? '') as String,
       user: (json['user'] ?? <String, dynamic>{}) as Map<String, dynamic>,
     );
+    accessToken = session.accessToken;
+    refreshToken = session.refreshToken;
+    return session;
   }
 
   Future<Map<String, dynamic>> me(String accessToken) async {
@@ -846,6 +939,61 @@ class _SignInPageState extends State<SignInPage> {
   String? _error;
   String? _devCode;
   AuthSession? _session;
+  bool _restoring = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    final saved = await SessionStore.load();
+    if (saved == null || saved.refreshToken.isEmpty) {
+      if (mounted) setState(() => _restoring = false);
+      return;
+    }
+    _api.accessToken = saved.accessToken;
+    _api.refreshToken = saved.refreshToken;
+    try {
+      final user = await _api.me(saved.accessToken);
+      final session = AuthSession(
+        accessToken: _api.accessToken ?? saved.accessToken,
+        refreshToken: _api.refreshToken ?? saved.refreshToken,
+        user: user,
+      );
+      await SessionStore.save(session);
+      if (!mounted) return;
+      setState(() { _session = session; _step = AuthStep.home; _restoring = false; });
+      unawaited(_registerPush(session));
+      _listenForNotificationTaps();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _restoreActiveRide());
+    } catch (_) {
+      await SessionStore.clear();
+      _api.accessToken = null;
+      _api.refreshToken = null;
+      if (mounted) setState(() => _restoring = false);
+    }
+  }
+
+  Future<void> _restoreActiveRide() async {
+    final rideId = await SessionStore.activeRideId();
+    if (rideId == null || _session == null || !mounted) return;
+    try {
+      final ride = await _api.getRide(rideId);
+      if (!mounted) return;
+      if (['SEARCHING', 'ASSIGNED', 'ARRIVING', 'ARRIVED', 'IN_PROGRESS'].contains(ride.state)) {
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => FindingDriverPage(api: _api, rideId: ride.id),
+        ));
+      } else {
+        await SessionStore.saveActiveRide(null);
+      }
+    } catch (_) {
+      await SessionStore.saveActiveRide(null);
+    }
+  }
+
   @override
   void dispose() {
     _notificationTapSub?.cancel();
@@ -887,6 +1035,8 @@ class _SignInPageState extends State<SignInPage> {
       final session = await _api.verifyOtp(_phone.text.trim(), code);
       await _api.me(session.accessToken);
       _api.accessToken = session.accessToken;
+      _api.refreshToken = session.refreshToken;
+      await SessionStore.save(session);
       setState(() { _busy = false; _session = session; _step = AuthStep.home; });
       unawaited(_registerPush(session));
       _listenForNotificationTaps();
@@ -906,6 +1056,7 @@ class _SignInPageState extends State<SignInPage> {
   void _openFromNotification(RemoteMessage? message) {
     final rideId = message?.data['rideId'];
     if (rideId is! String || rideId.isEmpty || !mounted) return;
+    SessionStore.saveActiveRide(rideId);
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => FindingDriverPage(api: _api, rideId: rideId),
     ));
@@ -927,7 +1078,11 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
-  void _signOut() {
+  void _signOut() async {
+    await SessionStore.clear();
+    _api.accessToken = null;
+    _api.refreshToken = null;
+    if (!mounted) return;
     setState(() {
       _session = null;
       _step = AuthStep.phone;
@@ -939,6 +1094,9 @@ class _SignInPageState extends State<SignInPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_restoring) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (_step == AuthStep.home && _session != null) {
       return HomeScreen(api: _api, session: _session!, onSignOut: _signOut);
     }
@@ -1302,6 +1460,7 @@ class _BookingPageState extends State<BookingPage> {
     setState(() { _busy = true; _error = null; });
     try {
       final ride = await widget.api.createRide(quote.id, _payment);
+      await SessionStore.saveActiveRide(ride.id);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (_) => FindingDriverPage(api: widget.api, rideId: ride.id),
@@ -1613,9 +1772,11 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
       }
       if (ride.state == 'COMPLETED') {
         _timer?.cancel();
+        SessionStore.saveActiveRide(null);
         _refreshPayment();
       } else if (ride.state == 'CANCELLED') {
         _timer?.cancel();
+        SessionStore.saveActiveRide(null);
       }
     } catch (e) {
       if (!mounted) return;
@@ -1673,6 +1834,7 @@ class _FindingDriverPageState extends State<FindingDriverPage> {
     setState(() { _busyCancel = true; _error = null; });
     try {
       await widget.api.cancelRide(widget.rideId, reason: reason);
+      await SessionStore.saveActiveRide(null);
       if (!mounted) return;
       setState(() { _cancelled = true; _busyCancel = false; });
       _timer?.cancel();

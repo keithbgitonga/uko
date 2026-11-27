@@ -295,6 +295,13 @@ class ApiClient {
   }
   Future<DriverStatus> rejectOffer(String id) async =>
       DriverStatus.fromJson(await _post('/driver/offers/$id/reject', const {}));
+  Future<DriverTrip> cancelTrip(String id, {String? reason}) async {
+    final json = await _post('/driver/trips/$id/cancel', {
+      if (reason != null) 'reason': reason,
+    });
+    return DriverTrip.fromJson((json['trip'] as Map).cast<String, dynamic>());
+  }
+
   Future<DriverTrip> tripAction(String id, String action, {String? pickupCode}) async {
     final json = await _post('/driver/trips/$id/$action', {
       if (pickupCode != null) 'pickupCode': pickupCode,
@@ -1201,7 +1208,14 @@ class _TripPageState extends State<TripPage> {
             ),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _cancelRideByDriver();
+              },
+              child: const Text('Cancel ride', style: TextStyle(color: Color(0xFFB3261E))),
+            ),
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Back')),
             FilledButton(
               onPressed: () {
                 final value = controller.text.trim();
@@ -1219,6 +1233,45 @@ class _TripPageState extends State<TripPage> {
     );
     controller.dispose();
     return code;
+  }
+
+  Future<void> _cancelRideByDriver() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel this ride?'),
+        content: const Text('The rider will be notified and the request will appear as cancelled for dispatch. Use this if you cannot verify the pickup code or the rider is unavailable.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Keep ride')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB3261E)),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Cancel ride'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      await widget.api.cancelTrip(_trip.id, reason: 'Driver could not verify pickup code / rider unavailable');
+      if (!mounted) return;
+      _statusTimer?.cancel();
+      _cancelNotified = true;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Ride cancelled'),
+          content: const Text('The ride was cancelled and dispatch has been notified.'),
+          actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Back to home'))],
+        ),
+      );
+      if (mounted) Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (mounted) setState(() { _busy = false; _error = e.message; });
+    } catch (e) {
+      if (mounted) setState(() { _busy = false; _error = e.toString(); });
+    }
   }
 
   Future<void> _advance(String action) async {
@@ -1242,6 +1295,27 @@ class _TripPageState extends State<TripPage> {
           ),
         );
         if (mounted) Navigator.of(context).pop();
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() { _busy = false; _error = e.message; });
+      if (e.code == 'PICKUP_CODE_INVALID') {
+        final cancel = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Incorrect pickup code'),
+            content: const Text('The trip was not started. Ask the rider to read the code again, or cancel this ride.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Try again')),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB3261E)),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Cancel ride'),
+              ),
+            ],
+          ),
+        );
+        if (cancel == true) await _cancelRideByDriver();
       }
     } catch (e) {
       setState(() { _busy = false; _error = e.toString(); });

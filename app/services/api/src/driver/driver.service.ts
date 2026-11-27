@@ -268,6 +268,19 @@ export class DriverService implements OnModuleInit {
     return [...trips].reverse().find((t) => t.state !== 'COMPLETED' && t.state !== 'CANCELLED') ?? null;
   }
 
+  cancelTrip(driverId: string, tripId: string, reason?: string): DriverTrip {
+    const trip = (this.trips.get(driverId) ?? []).find((t) => t.id === tripId);
+    if (!trip) throw new NotFoundException({ code: 'TRIP_NOT_FOUND' });
+    if (['COMPLETED', 'CANCELLED'].includes(trip.state)) {
+      throw new BadRequestException({ code: 'TRIP_NOT_CANCELLABLE' });
+    }
+    trip.state = 'CANCELLED';
+    trip.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: reason ?? 'Cancelled by driver' });
+    this.booking.cancelRideByDriver(trip.rideId, reason);
+    this.persistence.persist('driver_trip', trip.id, trip);
+    return trip;
+  }
+
   advanceTrip(driverId: string, tripId: string, action: 'arrived' | 'start' | 'complete', pickupCode?: string): DriverTrip {
     const trip = (this.trips.get(driverId) ?? []).find((t) => t.id === tripId);
     if (!trip) throw new NotFoundException({ code: 'TRIP_NOT_FOUND' });

@@ -69,7 +69,7 @@ export interface Ride {
     code: string;
     label: string;
     note?: string;
-    by: 'rider' | 'dispatch' | 'system';
+    by: 'rider' | 'driver' | 'dispatch' | 'system';
     at: string;
   };
   events: RideEvent[];
@@ -293,6 +293,26 @@ export class BookingService implements OnModuleInit {
     if (ride.driver?.driverId) {
       void this.notifications.send(ride.driver.driverId, 'Rider cancelled the ride', `Reason: ${label}.`, { rideId: ride.id, type: 'RIDE_CANCELLED' });
     }
+    return ride;
+  }
+
+  cancelRideByDriver(rideId: string, reason?: string): Ride {
+    const ride = this.findRideById(rideId);
+    if (!ride) throw new BadRequestException({ code: 'RIDE_NOT_FOUND' });
+    if (['COMPLETED', 'CANCELLED'].includes(ride.state)) {
+      throw new BadRequestException({ code: 'RIDE_NOT_CANCELLABLE' });
+    }
+    const label = reason?.trim() || 'Cancelled by driver';
+    ride.state = 'CANCELLED';
+    ride.cancellation = {
+      code: 'DRIVER_CANCELLED',
+      label,
+      by: 'driver',
+      at: new Date().toISOString(),
+    };
+    ride.events.push({ at: new Date().toISOString(), state: 'CANCELLED', note: `Cancelled by driver: ${label}` });
+    this.persistence.persist('booking_ride', ride.id, ride);
+    void this.notifications.send(ride.riderId, 'Driver cancelled the ride', `${label}. Please request another Boda.`, { rideId: ride.id, type: 'RIDE_CANCELLED' });
     return ride;
   }
 

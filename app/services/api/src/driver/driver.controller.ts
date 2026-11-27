@@ -86,6 +86,15 @@ export class DriverController {
     return { trip: this.driver.advanceTrip((await this.requireUser(authHeader)).id, id, 'start', body?.pickupCode) };
   }
 
+  @Post('trips/:id/cancel')
+  async cancel(
+    @Headers('authorization') authHeader: string | undefined,
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return { trip: this.driver.cancelTrip((await this.requireUser(authHeader)).id, id, body?.reason) };
+  }
+
   @Post('trips/:id/complete')
   async complete(@Headers('authorization') authHeader: string | undefined, @Param('id') id: string) {
     return { trip: this.driver.advanceTrip((await this.requireUser(authHeader)).id, id, 'complete') };
