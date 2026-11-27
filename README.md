@@ -63,6 +63,7 @@ Working project folder for the **Uko?** platform: an original rider-tracking and
 **Step 56 — Saved places + live ETA (2026-11-25): persisted saved places with a save action, and a live driver ETA on the rider driver card; ETA verified 7 min → 1 min on an assigned ride.**
 **Step 57 — Saved place edit/delete, driver ETA, offline fallback (2026-11-25): rename/remove menus, driver remaining-ETA, and runtime map fallback with automatic recovery.**
 **Step 58 — Home map line fix (2026-11-25): removed the demo straight placeholder; polylines now appear only for real OSRM route geometry.**
+**Step 65 — Thika pilot zone + instant search (2026-11-27): Thika defaults across apps/API/dispatch; destination suggestions now start at the first character and stay visible above the keyboard.**
 **Step 64 — Juja zone, GPS pickup, live search, mobile dispatch (2026-11-27): Juja defaults across apps/API/dispatch, live destination suggestions + reverse geocoding, GPS-first rider pickup, header-free UI and mobile dispatch layout.**
 **Step 63 — Fixed test credentials (2026-11-25): rider/driver/dispatch test numbers with generic OTP 123456; removed one-tap test-login endpoints and cards.**
 **Step 62 — One-tap test logins (2026-11-25): guarded test accounts for rider, driver, dispatch, safety and admin, with test-login cards in both apps and the dispatch console.**

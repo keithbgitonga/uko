@@ -366,6 +366,11 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Dispatch console has a mobile layout (wrapped tabs, 2-column metrics, compact tables).
 - Evidence: `juja-01-home.png`, `juja-02-search-sheet.png`, `juja-03-search-results.png`, `juja-04-booking-gps.png`, `juja-05-quote.png`, `juja-06-driver.png`, `dispatch-mobile-02.png`; notes `juja-search-mobile-notes.txt`.
 
+### 2026-11-27 — Thika pilot zone + instant search
+- Pilot zone moved from Juja to **Thika** across rider, driver, API and dispatch (saved places, map centers, fallbacks, pricing zone label).
+- Destination search now opens tall/autofocus and returns suggestions from the **first character** (local seed results instantly, 60–130 ms debounce), visible above the keyboard.
+- Evidence: `thika-01-home.png`, `thika-02-instant-search.png`, `thika-03-driver.png`; notes `thika-zone-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
