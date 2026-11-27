@@ -358,6 +358,14 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - API verified (test channel returns the code; wrong code rejected; dispatch test login passes the ops guard); rider reached home (`test-creds-01-rider.png`).
 - Disable by removing/blanking `TEST_OTP` before launch (`docs/Test-Logins.md`).
 
+### 2026-11-27 — Juja pilot zone, GPS pickup, live search, mobile dispatch
+- Pilot zone is now **Juja** across rider, driver, API and dispatch; maps and saved places default to Juja.
+- Booking search is live (debounced) and returns coordinate-backed suggestions; reverse geocoding added.
+- Rider pickup defaults to **current GPS location** (reverse-geocoded, Juja fallback).
+- Page headers removed in both apps; shared theme refreshed.
+- Dispatch console has a mobile layout (wrapped tabs, 2-column metrics, compact tables).
+- Evidence: `juja-01-home.png`, `juja-02-search-sheet.png`, `juja-03-search-results.png`, `juja-04-booking-gps.png`, `juja-05-quote.png`, `juja-06-driver.png`, `dispatch-mobile-02.png`; notes `juja-search-mobile-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
