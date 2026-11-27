@@ -383,6 +383,12 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - `currentTrip()` treated cancelled trips as active, so after any cancellation the online driver received no new offers.
 - Fixed to ignore COMPLETED and CANCELLED trips; deployed and verified new Thika requests appear in the driver app (`offers-fix-01.png`); notes `offers-fix-notes.txt`.
 
+### 2026-11-27 — rider session restore + driver pickup retry/cancel
+- Rider login persists (refresh-token rotation) and active ride is restored after a crash/relaunch; logout is explicit.
+- Driver code dialog supports Back/retry or Cancel ride; wrong code gets a Try again/Cancel dialog and never starts the trip.
+- Driver cancellation is stored with a reason and visible to dispatch.
+- Evidence: `session-01-restored.png`, `session-02-active-ride.png`; notes `session-pickup-cancel-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
