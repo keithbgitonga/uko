@@ -1174,6 +1174,32 @@ class _TripPageState extends State<TripPage> {
     } catch (_) {}
   }
 
+  Future<void> _updateEta() async {
+    final lat = _trip.state == 'IN_PROGRESS' ? _trip.dropoffLat : _trip.pickupLat;
+    final lng = _trip.state == 'IN_PROGRESS' ? _trip.dropoffLng : _trip.pickupLng;
+    if (lat == null || lng == null) return;
+    try {
+      final pos = await Geolocator.getCurrentPosition();
+      final route = await widget.api.getRoute(
+        pickupLat: pos.latitude, pickupLng: pos.longitude,
+        dropoffLat: lat, dropoffLng: lng,
+      );
+      if (mounted) setState(() => _etaMin = route.durationMin);
+    } catch (_) {}
+  }
+
+  Future<void> _loadRoute() async {
+    final trip = _trip;
+    if (trip.pickupLat == null || trip.dropoffLat == null) return;
+    try {
+      final route = await widget.api.getRoute(
+        pickupLat: trip.pickupLat!, pickupLng: trip.pickupLng!,
+        dropoffLat: trip.dropoffLat!, dropoffLng: trip.dropoffLng!,
+      );
+      if (mounted) setState(() => _route = route);
+    } catch (_) {}
+  }
+
   Future<String?> _askPickupCode() async {
     final controller = TextEditingController();
     String? validation;
