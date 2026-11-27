@@ -268,6 +268,12 @@ export class DriverService implements OnModuleInit {
     return [...trips].reverse().find((t) => t.state !== 'COMPLETED' && t.state !== 'CANCELLED') ?? null;
   }
 
+  getTrip(driverId: string, tripId: string): DriverTrip {
+    const trip = (this.trips.get(driverId) ?? []).find((t) => t.id === tripId);
+    if (!trip) throw new NotFoundException({ code: 'TRIP_NOT_FOUND' });
+    return trip;
+  }
+
   cancelTrip(driverId: string, tripId: string, reason?: string): DriverTrip {
     const trip = (this.trips.get(driverId) ?? []).find((t) => t.id === tripId);
     if (!trip) throw new NotFoundException({ code: 'TRIP_NOT_FOUND' });

@@ -295,6 +295,11 @@ class ApiClient {
   }
   Future<DriverStatus> rejectOffer(String id) async =>
       DriverStatus.fromJson(await _post('/driver/offers/$id/reject', const {}));
+  Future<DriverTrip> getTrip(String id) async {
+    final json = await _get('/driver/trips/$id');
+    return DriverTrip.fromJson((json['trip'] as Map).cast<String, dynamic>());
+  }
+
   Future<DriverTrip> cancelTrip(String id, {String? reason}) async {
     final json = await _post('/driver/trips/$id/cancel', {
       if (reason != null) 'reason': reason,
@@ -1144,46 +1149,28 @@ class _TripPageState extends State<TripPage> {
       final status = await widget.api.status();
       if (!mounted) return;
       final active = status.activeTrip;
-      if (active == null || active.id != _trip.id || active.state == 'CANCELLED') {
-        _cancelNotified = true;
+      // If an active trip is still ours, nothing has changed.
+      if (active != null && active.id == _trip.id && active.state != 'CANCELLED') return;
+      // No active trip can mean completed or cancelled: verify the actual trip state.
+      final latest = await widget.api.getTrip(_trip.id);
+      if (!mounted) return;
+      if (latest.state == 'COMPLETED') {
         _statusTimer?.cancel();
-        await showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Ride cancelled'),
-            content: const Text('The rider cancelled this ride. Dispatch can also cancel rides. You will not be charged.'),
-            actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Back to home'))],
-          ),
-        );
-        if (mounted) Navigator.of(context).pop();
+        return;
       }
-    } catch (_) {}
-  }
-
-  Future<void> _updateEta() async {
-    final lat = _trip.state == 'IN_PROGRESS' ? _trip.dropoffLat : _trip.pickupLat;
-    final lng = _trip.state == 'IN_PROGRESS' ? _trip.dropoffLng : _trip.pickupLng;
-    if (lat == null || lng == null) return;
-    try {
-      final pos = await Geolocator.getCurrentPosition();
-      final route = await widget.api.getRoute(
-        pickupLat: pos.latitude, pickupLng: pos.longitude,
-        dropoffLat: lat, dropoffLng: lng,
+      if (latest.state != 'CANCELLED') return;
+      _cancelNotified = true;
+      _statusTimer?.cancel();
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Ride cancelled'),
+          content: const Text('The rider cancelled this ride. Dispatch can also cancel rides. You will not be charged.'),
+          actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Back to home'))],
+        ),
       );
-      if (mounted) setState(() => _etaMin = route.durationMin);
-    } catch (_) {}
-  }
-
-  Future<void> _loadRoute() async {
-    final trip = _trip;
-    if (trip.pickupLat == null || trip.dropoffLat == null) return;
-    try {
-      final route = await widget.api.getRoute(
-        pickupLat: trip.pickupLat!, pickupLng: trip.pickupLng!,
-        dropoffLat: trip.dropoffLat!, dropoffLng: trip.dropoffLng!,
-      );
-      if (mounted) setState(() => _route = route);
+      if (mounted) Navigator.of(context).pop();
     } catch (_) {}
   }
 
@@ -1287,12 +1274,17 @@ class _TripPageState extends State<TripPage> {
       if (!mounted) return;
       setState(() { _trip = trip; _busy = false; });
       if (trip.state == 'IN_PROGRESS') {
+        _statusTimer?.cancel();
         await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => DriverNavigationPage(api: widget.api, trip: trip),
         ));
+        if (mounted && _trip.state == 'IN_PROGRESS') {
+          _statusTimer = Timer.periodic(const Duration(seconds: 3), (_) => _watchRideCancellation());
+        }
         return;
       }
       if (trip.state == 'COMPLETED') {
+        _statusTimer?.cancel();
         await showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(

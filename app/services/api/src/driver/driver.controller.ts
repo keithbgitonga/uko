@@ -72,6 +72,11 @@ export class DriverController {
     return { trip: this.driver.currentTrip((await this.requireUser(authHeader)).id) };
   }
 
+  @Get('trips/:id')
+  async getTrip(@Headers('authorization') authHeader: string | undefined, @Param('id') id: string) {
+    return { trip: this.driver.getTrip((await this.requireUser(authHeader)).id, id) };
+  }
+
   @Post('trips/:id/arrived')
   async arrived(@Headers('authorization') authHeader: string | undefined, @Param('id') id: string) {
     return { trip: this.driver.advanceTrip((await this.requireUser(authHeader)).id, id, 'arrived') };
