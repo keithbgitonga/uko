@@ -11,11 +11,13 @@ export interface PlaceResult {
 
 // Small offline seed so the bench and demos still work without Nominatim.
 const SEED: PlaceResult[] = [
-  { id: 'seed-juja-town', name: 'Juja Town', address: 'Juja Town, Kiambu County', lat: -1.1017, lng: 37.0144 },
-  { id: 'seed-jkuat', name: 'JKUAT', address: 'Jomo Kenyatta University of Agriculture and Technology, Juja', lat: -1.0973, lng: 37.0118 },
-  { id: 'seed-juja-mall', name: 'Juja City Mall', address: 'Juja City Mall, Juja', lat: -1.1058, lng: 37.0140 },
-  { id: 'seed-gachororo', name: 'Gachororo', address: 'Gachororo, Juja', lat: -1.1122, lng: 37.0207 },
-  { id: 'seed-kenyatta-road', name: 'Kenyatta Road', address: 'Kenyatta Road, Juja', lat: -1.1010, lng: 37.0080 },
+  { id: 'seed-thika-town', name: 'Thika Town', address: 'Thika Town, Kiambu County', lat: -1.0333, lng: 37.0693 },
+  { id: 'seed-ananas-mall', name: 'Ananas Mall', address: 'Ananas Mall, Thika', lat: -1.0408, lng: 37.0910 },
+  { id: 'seed-thika-hospital', name: 'Thika Level 5 Hospital', address: 'Thika Level 5 Hospital, Thika', lat: -1.0395, lng: 37.0830 },
+  { id: 'seed-makongeni', name: 'Makongeni', address: 'Makongeni, Thika', lat: -1.0330, lng: 37.0550 },
+  { id: 'seed-section-nine', name: 'Section 9', address: 'Section 9, Thika', lat: -1.0450, lng: 37.0750 },
+  { id: 'seed-blue-post', name: 'Blue Post Hotel', address: 'Blue Post Hotel, Thika', lat: -1.0200, lng: 37.0700 },
+  { id: 'seed-chania-falls', name: 'Chania Falls', address: 'Chania Falls, Thika', lat: -1.0330, lng: 37.0830 },
   { id: 'seed-ruiru', name: 'Ruiru', address: 'Ruiru, Kiambu County', lat: -1.1460, lng: 36.9600 },
   { id: 'seed-kenyatta', name: 'Kenyatta Avenue', address: 'Kenyatta Avenue, Nairobi', lat: -1.2841, lng: 36.8233 },
   { id: 'seed-westlands', name: 'Westlands', address: 'Westlands, Nairobi', lat: -1.2657, lng: 36.8075 },
@@ -46,7 +48,13 @@ export class PlacesService {
   async search(query: string): Promise<PlaceResult[]> {
     const raw = query.trim();
     const q = raw.toLowerCase();
-    if (q.length < 2) return [];
+    if (!q) return [];
+    // One character: instant local matches, no network round-trip.
+    if (q.length === 1) {
+      return SEED.filter((p) => p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q))
+        .sort((a, b) => (scorePlace(b, q) + proximityBonus(b)) - (scorePlace(a, q) + proximityBonus(a)))
+        .slice(0, 8);
+    }
     const cached = this.cache.get(q);
     if (cached && cached.at > Date.now() - 3_600_000) return cached.places;
 
@@ -73,7 +81,7 @@ export class PlacesService {
       seen.add(key);
       places.push(place);
     }
-    // Keep Juja-area results ahead of distant matches unless the name/address match is much stronger.
+    // Keep Thika-area results ahead of distant matches unless the name/address match is much stronger.
     places.sort((a, b) =>
       (scorePlace(b, q) + proximityBonus(b)) - (scorePlace(a, q) + proximityBonus(a)),
     );
@@ -134,7 +142,7 @@ export class PlacesService {
     url.searchParams.set('dedupe', '1');
     url.searchParams.set('accept-language', 'en');
     url.searchParams.set('bounded', '0');
-    url.searchParams.set('viewbox', '36.90,-1.00,37.20,-1.30');
+    url.searchParams.set('viewbox', '36.95,-0.95,37.25,-1.20');
     const response = await fetch(url, {
       headers: { 'user-agent': userAgent, accept: 'application/json' },
       signal: AbortSignal.timeout(4_000),
@@ -172,11 +180,11 @@ function scorePlace(place: PlaceResult, q: string): number {
 }
 
 
-const JUJA_CENTER = { lat: -1.1017, lng: 37.0144 };
+const THIKA_CENTER = { lat: -1.0333, lng: 37.0693 };
 
 function proximityBonus(place: PlaceResult): number {
-  const latM = (place.lat - JUJA_CENTER.lat) * 111_000;
-  const lngM = (place.lng - JUJA_CENTER.lng) * 111_000 * Math.cos(JUJA_CENTER.lat * Math.PI / 180);
+  const latM = (place.lat - THIKA_CENTER.lat) * 111_000;
+  const lngM = (place.lng - THIKA_CENTER.lng) * 111_000 * Math.cos(THIKA_CENTER.lat * Math.PI / 180);
   const km = Math.sqrt(latM * latM + lngM * lngM) / 1000;
   if (km <= 8) return 45;
   if (km <= 20) return 25;

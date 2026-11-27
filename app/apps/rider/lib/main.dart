@@ -287,10 +287,10 @@ class SavedPlace {
 class SavedPlacesStore {
   static const _key = 'uko_saved_places_v1';
   static const defaults = <SavedPlace>[
-    SavedPlace(label: 'Home', address: 'Gachororo, Juja', lat: -1.1122, lng: 37.0207),
-    SavedPlace(label: 'Work', address: 'JKUAT, Juja', lat: -1.0973, lng: 37.0118),
+    SavedPlace(label: 'Home', address: 'Makongeni, Thika', lat: -1.0330, lng: 37.0550),
+    SavedPlace(label: 'Work', address: 'Thika Town', lat: -1.0333, lng: 37.0693),
     SavedPlace(label: 'Airport', address: 'JKIA Terminal 1A', lat: -1.3169, lng: 36.9289),
-    SavedPlace(label: 'Mall', address: 'Juja City Mall', lat: -1.1058, lng: 37.0140),
+    SavedPlace(label: 'Mall', address: 'Ananas Mall, Thika', lat: -1.0408, lng: 37.0910),
   ];
 
   static Future<List<SavedPlace>> load() async {
@@ -1080,10 +1080,10 @@ class BookingPage extends StatefulWidget {
 
 class _BookingPageState extends State<BookingPage> {
   final _pickup = TextEditingController(text: 'Locating your pickup…');
-  final _dropoff = TextEditingController(text: 'Juja City Mall');
+  final _dropoff = TextEditingController(text: 'Ananas Mall');
   PlaceSuggestion? _pickupPlace;
   PlaceSuggestion? _dropoffPlace = const PlaceSuggestion(
-      id: 'default-dropoff', name: 'Juja City Mall', address: 'Juja City Mall, Juja', lat: -1.1058, lng: 37.0140);
+      id: 'default-dropoff', name: 'Ananas Mall', address: 'Ananas Mall, Thika', lat: -1.0408, lng: 37.0910);
   List<PlaceSuggestion> _pickupSuggestions = const [];
   List<PlaceSuggestion> _dropoffSuggestions = const [];
   RouteResult? _route;
@@ -1146,12 +1146,12 @@ class _BookingPageState extends State<BookingPage> {
         _locating = false;
         _pickupPlace = const PlaceSuggestion(
           id: 'fallback-pickup',
-          name: 'Juja Town',
-          address: 'Juja Town, Kiambu County',
-          lat: -1.1017,
-          lng: 37.0144,
+          name: 'Thika Town',
+          address: 'Thika Town, Kiambu County',
+          lat: -1.0333,
+          lng: 37.0693,
         );
-        _pickup.text = 'Juja Town';
+        _pickup.text = 'Thika Town';
       });
       _refreshRoute();
     }
@@ -1977,12 +1977,12 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  final _pickup = TextEditingController(text: 'Juja Town');
-  final _dropoff = TextEditingController(text: 'Juja City Mall');
+  final _pickup = TextEditingController(text: 'Thika Town');
+  final _dropoff = TextEditingController(text: 'Ananas Mall');
   PlaceSuggestion? _pickupPlace = const PlaceSuggestion(
       id: 'default-pickup', name: 'Kenyatta Avenue', address: 'Kenyatta Avenue, Nairobi', lat: -1.2841, lng: 36.8233);
   PlaceSuggestion? _dropoffPlace = const PlaceSuggestion(
-      id: 'default-dropoff', name: 'Juja City Mall', address: 'Juja City Mall, Juja', lat: -1.1058, lng: 37.0140);
+      id: 'default-dropoff', name: 'Ananas Mall', address: 'Ananas Mall, Thika', lat: -1.0408, lng: 37.0910);
   List<PlaceSuggestion> _pickupSuggestions = const [];
   List<PlaceSuggestion> _dropoffSuggestions = const [];
   Timer? _searchDebounce;
@@ -2939,7 +2939,7 @@ class HomeScreen extends StatelessWidget {
                         child: const Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.location_on, size: 14, color: Color(0xFF0C8C86)),
                           SizedBox(width: 4),
-                          Text('Juja', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2A4048))),
+                          Text('Thika', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2A4048))),
                         ]),
                       ),
                       const SizedBox(width: 8),
@@ -3243,7 +3243,7 @@ class _RideMapPainter extends CustomPainter {
     if (hero) {
       final textPainter = TextPainter(
         text: const TextSpan(
-          text: 'Juja · Boda pilot',
+          text: 'Thika · Boda pilot',
           style: TextStyle(fontSize: 10, color: Color(0xFF7A918A), fontWeight: FontWeight.w600, letterSpacing: 0.4),
         ),
         textDirection: TextDirection.ltr,
@@ -3563,12 +3563,12 @@ class _BookingSheetState extends State<BookingSheet> {
   void _onQueryChanged(String value) {
     _searchDebounce?.cancel();
     final query = value.trim();
-    if (query.length < 2) {
+    if (query.isEmpty) {
       setState(() { _suggestions = const []; _searching = false; });
       return;
     }
     setState(() => _searching = true);
-    _searchDebounce = Timer(const Duration(milliseconds: 280), () async {
+    _searchDebounce = Timer(Duration(milliseconds: query.length == 1 ? 60 : 130), () async {
       try {
         final places = await widget.api.searchPlaces(query);
         if (!mounted) return;
@@ -3638,9 +3638,9 @@ class _BookingSheetState extends State<BookingSheet> {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.62,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
+      initialChildSize: 0.9,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
       builder: (context, controller) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -3657,11 +3657,11 @@ class _BookingSheetState extends State<BookingSheet> {
             TextField(
               key: const Key('sheet_destination'),
               controller: _destination,
-              autofocus: false,
+              autofocus: true,
               textInputAction: TextInputAction.search,
               onChanged: _onQueryChanged,
               decoration: InputDecoration(
-                hintText: 'Search Juja, JKUAT, a mall or an address',
+                hintText: 'Search Thika, Ananas Mall, a landmark or address',
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF0C8C86)),
                 suffixIcon: _searching
                     ? const Padding(padding: EdgeInsets.all(14), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
@@ -3673,14 +3673,14 @@ class _BookingSheetState extends State<BookingSheet> {
               onSubmitted: (_) => _submitQuery(),
             ),
             const SizedBox(height: 14),
-            if (_destination.text.trim().length >= 2) ...[
+            if (_destination.text.trim().isNotEmpty) ...[
               if (_suggestions.isEmpty && !_searching)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 22),
                   child: Column(children: [
                     const Icon(Icons.search_off, size: 36, color: Color(0xFF8A9DA2)),
                     const SizedBox(height: 8),
-                    Text('No places found. Try a landmark like "JKUAT" or "Juja City Mall".',
+                    Text('No places found. Try a landmark like "Ananas Mall" or "Thika Town".',
                         textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                   ]),
                 ),
@@ -3853,8 +3853,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
 
 const bool kRealMapsEnabled = bool.fromEnvironment('UKO_REAL_MAPS', defaultValue: true);
-const _ukoPickup = LatLng(-1.1017, 37.0144);
-const _ukoDropoff = LatLng(-1.1058, 37.0140);
+const _ukoPickup = LatLng(-1.0333, 37.0693);
+const _ukoDropoff = LatLng(-1.0408, 37.0910);
 
 /// Real Google map when built with `--dart-define=UKO_REAL_MAPS=true` and a
 /// Maps API key configured; otherwise falls back to the offline stylised map.

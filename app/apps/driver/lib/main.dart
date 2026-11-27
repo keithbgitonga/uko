@@ -1412,7 +1412,7 @@ class _DriverMapPainter extends CustomPainter {
     _pin(canvas, Offset(size.width * 0.86, size.height * 0.2), const Color(0xFFB3261E));
     if (hero) {
       final text = TextPainter(
-        text: const TextSpan(text: 'Juja · driver', style: TextStyle(fontSize: 10, color: Color(0xFF7A918A), fontWeight: FontWeight.w600)),
+        text: const TextSpan(text: 'Thika · driver', style: TextStyle(fontSize: 10, color: Color(0xFF7A918A), fontWeight: FontWeight.w600)),
         textDirection: TextDirection.ltr,
       )..layout();
       text.paint(canvas, Offset(20, size.height - 24));
@@ -1715,8 +1715,8 @@ Future<void> registerPushForApi(ApiClient api) async {
 
 
 const bool kRealMapsEnabled = bool.fromEnvironment('UKO_REAL_MAPS', defaultValue: true);
-const _ukoPickup = LatLng(-1.1017, 37.0144);
-const _ukoDropoff = LatLng(-1.1058, 37.0140);
+const _ukoPickup = LatLng(-1.0333, 37.0693);
+const _ukoDropoff = LatLng(-1.0408, 37.0910);
 
 /// Real Google map when built with `--dart-define=UKO_REAL_MAPS=true` and a
 /// Maps API key configured; otherwise falls back to the offline stylised map.
