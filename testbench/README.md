@@ -379,6 +379,10 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - New consistent Uko? launcher icons for rider and driver.
 - Evidence: `cancel-01-empty-destination.png`, `driver-pickup-code-01.png`, `driver-pickup-code-02.png`; notes `cancellation-pickup-notes.txt`.
 
+### 2026-11-27 — cancelled trip blocked new offers (fixed)
+- `currentTrip()` treated cancelled trips as active, so after any cancellation the online driver received no new offers.
+- Fixed to ignore COMPLETED and CANCELLED trips; deployed and verified new Thika requests appear in the driver app (`offers-fix-01.png`); notes `offers-fix-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
