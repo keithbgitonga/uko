@@ -265,7 +265,7 @@ export class DriverService implements OnModuleInit {
 
   currentTrip(driverId: string): DriverTrip | null {
     const trips = this.trips.get(driverId) ?? [];
-    return [...trips].reverse().find((t) => t.state !== 'COMPLETED') ?? null;
+    return [...trips].reverse().find((t) => t.state !== 'COMPLETED' && t.state !== 'CANCELLED') ?? null;
   }
 
   advanceTrip(driverId: string, tripId: string, action: 'arrived' | 'start' | 'complete', pickupCode?: string): DriverTrip {
