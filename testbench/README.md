@@ -371,6 +371,14 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Destination search now opens tall/autofocus and returns suggestions from the **first character** (local seed results instantly, 60–130 ms debounce), visible above the keyboard.
 - Evidence: `thika-01-home.png`, `thika-02-instant-search.png`, `thika-03-driver.png`; notes `thika-zone-notes.txt`.
 
+### 2026-11-27 — cancellation, pickup code, branded icons
+- Book/Schedule no longer prefill a destination; GPS pickup remains.
+- Driver must enter the rider's 4-digit pickup code before starting; API enforces it.
+- Rider cancellation requires a reason; cancellation is blocked after ARRIVED/IN_PROGRESS (dispatch-only).
+- Driver status clears cancelled trips; dispatch shows cancellation reasons.
+- New consistent Uko? launcher icons for rider and driver.
+- Evidence: `cancel-01-empty-destination.png`, `driver-pickup-code-01.png`, `driver-pickup-code-02.png`; notes `cancellation-pickup-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
