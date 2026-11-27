@@ -389,6 +389,11 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - Driver cancellation is stored with a reason and visible to dispatch.
 - Evidence: `session-01-restored.png`, `session-02-active-ride.png`; notes `session-pickup-cancel-notes.txt`.
 
+### 2026-11-27 — driver navigation + red-screen fix
+- Fixed the pickup-code dialog controller-disposal assertion that caused a red screen after starting.
+- After pickup verification the driver enters a full-screen navigation mode; direct Google Maps navigation handoff verified.
+- Evidence: `driver-navigation-01.png`, `driver-google-maps-01.png`; notes `driver-navigation-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
