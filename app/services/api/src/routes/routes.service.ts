@@ -84,7 +84,7 @@ export class RoutesService {
 
   private instruction(type: string, modifier: string, name: string): string {
     const road = name ? ` onto ${name}` : '';
-    if (type === 'depart') return name ? `Head out on ${name}` : 'Head to the pickup';
+    if (type === 'depart') return name ? `Head out on ${name}` : 'Start your trip';
     if (type === 'arrive') return 'Arrive at your destination';
     if (type === 'merge') return `Merge${modifier ? ' ' + modifier : ''}${road}`;
     if (type === 'fork') return `Keep ${modifier || 'straight'}${road}`;

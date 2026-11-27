@@ -1231,6 +1231,7 @@ class _TripPageState extends State<TripPage> {
         ),
       ),
     );
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     controller.dispose();
     return code;
   }
@@ -1285,6 +1286,12 @@ class _TripPageState extends State<TripPage> {
       final trip = await widget.api.tripAction(_trip.id, action, pickupCode: pickupCode);
       if (!mounted) return;
       setState(() { _trip = trip; _busy = false; });
+      if (trip.state == 'IN_PROGRESS') {
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => DriverNavigationPage(api: widget.api, trip: trip),
+        ));
+        return;
+      }
       if (trip.state == 'COMPLETED') {
         await showDialog<void>(
           context: context,
@@ -1323,13 +1330,19 @@ class _TripPageState extends State<TripPage> {
   }
 
   Future<void> _navigate() async {
-    final lat = _trip.state == 'IN_PROGRESS' ? _trip.dropoffLat : _trip.pickupLat;
-    final lng = _trip.state == 'IN_PROGRESS' ? _trip.dropoffLng : _trip.pickupLng;
+    if (_trip.state == 'IN_PROGRESS') {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => DriverNavigationPage(api: widget.api, trip: _trip),
+      ));
+      return;
+    }
+    final lat = _trip.pickupLat;
+    final lng = _trip.pickupLng;
     if (lat == null || lng == null) return;
-    final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    final uri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No maps app available')));
+      final fallback = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving&dir_action=navigate');
+      await launchUrl(fallback, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -1447,6 +1460,218 @@ class _TripPageState extends State<TripPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class DriverNavigationPage extends StatefulWidget {
+  const DriverNavigationPage({super.key, required this.api, required this.trip});
+  final ApiClient api;
+  final DriverTrip trip;
+
+  @override
+  State<DriverNavigationPage> createState() => _DriverNavigationPageState();
+}
+
+class _DriverNavigationPageState extends State<DriverNavigationPage> {
+  final MapController _map = MapController();
+  RouteResult? _route;
+  LatLng? _position;
+  Timer? _timer;
+  bool _busy = false;
+  bool _fitted = false;
+
+  LatLng get _destination => LatLng(widget.trip.dropoffLat ?? -1.0333, widget.trip.dropoffLng ?? 37.0693);
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshNavigation();
+    _timer = Timer.periodic(const Duration(seconds: 8), (_) => _refreshNavigation());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshNavigation() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition();
+      final route = await widget.api.getRoute(
+        pickupLat: pos.latitude,
+        pickupLng: pos.longitude,
+        dropoffLat: _destination.latitude,
+        dropoffLng: _destination.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        _position = LatLng(pos.latitude, pos.longitude);
+        _route = route;
+      });
+      if (!_fitted) {
+        _fitted = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fitRoute());
+      }
+    } catch (_) {
+      // Keep the last known route; retry on the next tick.
+    }
+  }
+
+  void _fitRoute() {
+    final route = _route;
+    if (route == null || route.points.isEmpty) return;
+    _map.fitCamera(CameraFit.bounds(
+      bounds: LatLngBounds.fromPoints([...route.points, if (_position != null) _position!]),
+      padding: const EdgeInsets.only(top: 120, bottom: 300, left: 40, right: 40),
+      maxZoom: 16,
+    ));
+  }
+
+  Future<void> _openGoogleMaps() async {
+    final dest = _destination;
+    final origin = _position;
+    final nav = Uri.parse('google.navigation:q=${dest.latitude},${dest.longitude}&mode=d');
+    var launched = false;
+    try {
+      launched = await launchUrl(nav, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+    if (launched) return;
+    final web = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '${origin == null ? '' : '&origin=${origin.latitude},${origin.longitude}'}'
+      '&destination=${dest.latitude},${dest.longitude}&travelmode=driving&dir_action=navigate',
+    );
+    if (!await launchUrl(web, mode: LaunchMode.externalApplication) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google Maps could not be opened')));
+    }
+  }
+
+  Future<void> _completeTrip() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete trip?'),
+        content: Text('Finish the trip for ${widget.trip.riderName} at ${widget.trip.dropoffAddress}.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Keep navigating')),
+          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Complete trip')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _busy = true);
+    try {
+      final trip = await widget.api.tripAction(widget.trip.id, 'complete');
+      if (!mounted) return;
+      _timer?.cancel();
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Trip completed'),
+          content: Text('KES ${trip.fare} recorded. Net after 20% commission: KES ${(trip.fare * 0.8).round()}.'),
+          actions: [FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Done'))],
+        ),
+      );
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not complete trip: $e')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final route = _route;
+    final nextStep = route?.steps.isNotEmpty == true ? route!.steps.first.instruction : 'Follow the route to the drop-off';
+    return Scaffold(
+      body: Stack(children: [
+        FlutterMap(
+          mapController: _map,
+          options: MapOptions(
+            initialCenter: _destination,
+            initialZoom: 14,
+            initialCameraFit: _position == null ? null : CameraFit.bounds(
+              bounds: LatLngBounds.fromPoints([_position!, _destination]),
+              padding: const EdgeInsets.only(top: 120, bottom: 300, left: 40, right: 40),
+              maxZoom: 16,
+            ),
+          ),
+          children: [
+            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'ke.uko.driver', maxZoom: 19),
+            if (route != null)
+              PolylineLayer(polylines: [Polyline(points: route.points, strokeWidth: 6, color: const Color(0xFF0C8C86))]),
+            MarkerLayer(markers: [
+              Marker(point: _destination, width: 48, height: 48, child: const Icon(Icons.location_on, color: Color(0xFFB3261E), size: 38)),
+              if (_position != null)
+                Marker(point: _position!, width: 54, height: 54, child: Container(
+                  decoration: BoxDecoration(color: const Color(0xFF08222B), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
+                  child: const Icon(Icons.two_wheeler, color: Colors.white, size: 28),
+                )),
+            ]),
+            RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+          ],
+        ),
+        SafeArea(child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(children: [
+            Material(color: Colors.white, shape: const CircleBorder(), child: IconButton(
+              key: const Key('nav_exit'),
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).pop(),
+            )),
+            const SizedBox(width: 10),
+            Expanded(child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+              child: Text(route == null ? 'Starting navigation…' : '${route.distanceKm} km · ${route.durationMin} min',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            )),
+          ]),
+        )),
+        Positioned(left: 0, right: 0, bottom: 0, child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                width: 46, height: 46,
+                decoration: BoxDecoration(color: const Color(0xFFE9F7F4), borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.turn_right, color: Color(0xFF0C8C86), size: 26),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text(nextStep, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
+            ]),
+            const SizedBox(height: 12),
+            Text('To ${widget.trip.dropoffAddress}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF5C7077))),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('nav_google_maps'),
+                onPressed: _openGoogleMaps,
+                icon: const Icon(Icons.navigation_outlined),
+                label: const Text('Navigate with Google Maps'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                key: const Key('nav_complete_trip'),
+                onPressed: _busy ? null : _completeTrip,
+                child: _busy
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Complete trip'),
+              ),
+            ),
+          ]),
+        )),
+      ]),
     );
   }
 }
