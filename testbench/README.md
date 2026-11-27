@@ -394,6 +394,11 @@ Naming: `<app>-<flow>-<yyyy-mm-dd-hhmm>.<ext>`.
 - After pickup verification the driver enters a full-screen navigation mode; direct Google Maps navigation handoff verified.
 - Evidence: `driver-navigation-01.png`, `driver-google-maps-01.png`; notes `driver-navigation-notes.txt`.
 
+### 2026-11-27 — completed trips falsely shown as cancelled (fixed)
+- Driver trip watcher treated “no active trip” after completion as cancellation.
+- Now fetches actual trip state: COMPLETED stops silently, CANCELLED shows the dialog; watcher paused during navigation.
+- Notes: `completed-trip-fix-notes.txt`.
+
 ## Device constraints (quick)
 
 - Android **12 (API 31)**: no POST_NOTIFICATIONS runtime prompt; test that on API 33+ later.
